@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>Host.Api</RootNamespace>
+    <UserSecretsId>gestao-eventos-host-api</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <ProjectReference Include="../../shared/Shared.WebHost/Shared.WebHost.csproj" />
+    <ProjectReference Include="../../modules/Module.Locais/Module.Locais.csproj" />
+    <ProjectReference Include="../../modules/Module.Pessoas/Module.Pessoas.csproj" />
+    <ProjectReference Include="../../modules/Module.Eventos/Module.Eventos.csproj" />
+    <ProjectReference Include="../../modules/Module.Palestras/Module.Palestras.csproj" />
+    <ProjectReference Include="../../modules/Module.Identidade/Module.Identidade.csproj" />
+    <ProjectReference Include="../../modules/Module.Auditoria/Module.Auditoria.csproj" />
+  </ItemGroup>
+</Project>

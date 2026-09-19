@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Shared.WebHost</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+    <ProjectReference Include="../Shared.Contracts/Shared.Contracts.csproj" />
+    <ProjectReference Include="../Shared.Data/Shared.Data.csproj" />
+    <ProjectReference Include="../Shared.Http/Shared.Http.csproj" />
+    <ProjectReference Include="../Shared.Observability/Shared.Observability.csproj" />
+    <ProjectReference Include="../Shared.Messaging/Shared.Messaging.csproj" />
+  </ItemGroup>
+</Project>

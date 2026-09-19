@@ -1,0 +1,27 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/hosts/">
+    <Project Path="src/hosts/Host.Api/Host.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/modules/">
+    <Project Path="src/modules/Module.Auditoria/Module.Auditoria.csproj" />
+    <Project Path="src/modules/Module.Eventos/Module.Eventos.csproj" />
+    <Project Path="src/modules/Module.Identidade/Module.Identidade.csproj" />
+    <Project Path="src/modules/Module.Locais/Module.Locais.csproj" />
+    <Project Path="src/modules/Module.Palestras/Module.Palestras.csproj" />
+    <Project Path="src/modules/Module.Pessoas/Module.Pessoas.csproj" />
+  </Folder>
+  <Folder Name="/src/shared/">
+    <Project Path="src/shared/Shared.Contracts/Shared.Contracts.csproj" />
+    <Project Path="src/shared/Shared.Data/Shared.Data.csproj" />
+    <Project Path="src/shared/Shared.Http/Shared.Http.csproj" />
+    <Project Path="src/shared/Shared.Messaging/Shared.Messaging.csproj" />
+    <Project Path="src/shared/Shared.Observability/Shared.Observability.csproj" />
+    <Project Path="src/shared/Shared.WebHost/Shared.WebHost.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Tests.Functional/Tests.Functional.csproj" />
+    <Project Path="tests/Tests.Integration/Tests.Integration.csproj" />
+    <Project Path="tests/Tests.Unit/Tests.Unit.csproj" />
+  </Folder>
+</Solution>

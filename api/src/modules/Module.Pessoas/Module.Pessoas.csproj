@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Module.Pessoas</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+
+    <ProjectReference Include="../../shared/Shared.Contracts/Shared.Contracts.csproj" />
+    <ProjectReference Include="../../shared/Shared.Data/Shared.Data.csproj" />
+    <ProjectReference Include="../../shared/Shared.Http/Shared.Http.csproj" />
+    <ProjectReference Include="../../shared/Shared.Observability/Shared.Observability.csproj" />
+    <ProjectReference Include="../../shared/Shared.Messaging/Shared.Messaging.csproj" />
+    <ProjectReference Include="../../shared/Shared.WebHost/Shared.WebHost.csproj" />
+  </ItemGroup>
+</Project>

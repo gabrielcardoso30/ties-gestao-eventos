@@ -1,0 +1,71 @@
+# Sobe tudo com um comando: docker compose up --build
+# - postgres:   banco (um schema por módulo)
+# - otel:       Aspire Dashboard (recebe OTLP: logs, traces e métricas) -> http://localhost:18888
+# - api:        Host.Api (ASP.NET Core 10)                              -> http://localhost:8080/swagger
+# - front:      React + Vite (build estático servido por nginx, proxy /api -> api) -> http://localhost:5173
+name: gestao-eventos
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: gestao-eventos-postgres
+    environment:
+      POSTGRES_DB: gestao_eventos
+      POSTGRES_USER: gestao
+      POSTGRES_PASSWORD: gestao
+      TZ: America/Sao_Paulo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gestao -d gestao_eventos"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  otel:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.4
+    container_name: gestao-eventos-otel
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "18888:18888"   # UI
+      - "4317:18889"    # OTLP gRPC
+
+  api:
+    build:
+      context: ./api
+      dockerfile: src/hosts/Host.Api/Dockerfile
+    container_name: gestao-eventos-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__GestaoEventos: "Host=postgres;Port=5432;Database=gestao_eventos;Username=gestao;Password=gestao;Maximum Pool Size=100"
+      Database__MigrateOnStartup: "true"
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-troque-esta-chave-em-producao-0123456789abcdef0123456789}
+      Identidade__AdministradorInicial__Senha: ${ADMIN_SENHA:-Admin@123456}
+      Cors__AllowedOrigins__0: http://localhost:5173
+      Cors__AllowedOrigins__1: http://localhost:8080
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel:18889
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      # ApplicationInsights__ConnectionString: "InstrumentationKey=...;IngestionEndpoint=..."  # habilita Azure Monitor
+    ports:
+      - "8080:8080"
+
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: gestao-eventos-front
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
+volumes:
+  postgres-data:
