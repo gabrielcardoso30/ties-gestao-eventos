@@ -1,0 +1,4 @@
+import { EntityFormPage, type EntityFormField } from '@/shared/components/generic/EntityFormPage'
+const fields: EntityFormField[] = [{ name: 'pessoaNome', label: 'Nome', required: true }, { name: 'pessoaEmail', label: 'E-mail', type: 'email', required: true }, { name: 'pessoaTelefone', label: 'Telefone' }, { name: 'pessoaDocumento', label: 'CPF' }, { name: 'pessoaEmpresa', label: 'Empresa' }, { name: 'pessoaCargo', label: 'Cargo' }, { name: 'pessoaFotoUrl', label: 'URL da foto', type: 'url', full: true }, { name: 'pessoaMiniBio', label: 'Mini bio', type: 'textarea', full: true }]
+export function CriarPessoaPage() { return <EntityFormPage titulo="Nova pessoa" descricao="Uma pessoa pode ser palestrante, participante ou ambos." voltarPara="/pessoas" endpoint="/pessoas" method="post" fields={fields} invalidar={['pessoas']} aoSalvar={r => `/pessoas/${r.id}`} /> }
+export { fields as pessoaFields }

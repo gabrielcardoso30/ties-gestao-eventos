@@ -1,0 +1,2 @@
+import { useParams } from 'react-router-dom'; import { EntityFormPage } from '@/shared/components/generic/EntityFormPage'; import { localFields } from '../criar/CriarLocalPage'
+export function AtualizarLocalPage() { const { id } = useParams(); return <EntityFormPage titulo="Editar local" descricao="Atualize os dados gerais do local." voltarPara={`/locais/${id}`} endpoint={`/locais/${id}`} carregarDe={`/locais/${id}`} method="put" fields={localFields.filter(f => f.name !== 'capacidadeAmbienteUnico')} invalidar={['locais']} aoSalvar={() => `/locais/${id}`} /> }

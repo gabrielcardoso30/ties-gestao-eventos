@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { Search } from 'lucide-react'
+import { ChevronRight, Plus, Search } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { api } from '@/shared/api/http'
 import type { PagedResult } from '@/shared/api/types'
@@ -9,6 +10,7 @@ import { ErrorState } from '@/shared/components/generic/ErrorState'
 import { LoadingState } from '@/shared/components/generic/LoadingState'
 import { PageHeader } from '@/shared/components/generic/PageHeader'
 import { Badge } from '@/shared/components/ui/badge'
+import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Input } from '@/shared/components/ui/input'
 
@@ -24,11 +26,14 @@ interface ResourceListPageProps<T> {
   endpoint: string
   queryKey: string
   columns: ResourceColumn<T>[]
+  criarEm?: string
+  detalheEm?: (item: T) => string
 }
 
 /** Listagem genérica usada por todos os módulos: busca, loading, erro, vazio, tabela e paginação. */
-export function ResourceListPage<T extends { id: string }>({ modulo, titulo, descricao, endpoint, queryKey, columns }: ResourceListPageProps<T>) {
+export function ResourceListPage<T extends { id: string }>({ modulo, titulo, descricao, endpoint, queryKey, columns, criarEm, detalheEm }: ResourceListPageProps<T>) {
   const [busca, setBusca] = useState('')
+  const navigate = useNavigate()
   const resultado = useQuery({
     queryKey: [queryKey, busca],
     queryFn: ({ signal }) => api.get<PagedResult<T>>(endpoint, { busca, pagina: 1, tamanhoPagina: 20 }, signal),
@@ -36,20 +41,20 @@ export function ResourceListPage<T extends { id: string }>({ modulo, titulo, des
 
   return (
     <div className="space-y-6">
-      <PageHeader titulo={titulo} descricao={descricao} trilha={[{ label: 'Início', to: '/' }, { label: modulo }]} />
+      <PageHeader titulo={titulo} descricao={descricao} trilha={[{ label: 'Início', to: '/' }, { label: modulo }]} acoes={criarEm ? <Button asChild variant="cta"><Link to={criarEm}><Plus /> Novo registro</Link></Button> : undefined} />
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
         <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder={`Buscar em ${titulo.toLowerCase()}`} className="pl-9" />
       </div>
       {resultado.isLoading ? <LoadingState /> : resultado.isError ? <ErrorState erro={resultado.error} onTentarNovamente={() => { void resultado.refetch() }} /> : !resultado.data?.itens.length ? (
-        <EmptyState titulo={`Nenhum registro em ${titulo.toLowerCase()}`} descricao="Altere os filtros ou cadastre o primeiro registro pela API." />
+        <EmptyState titulo={`Nenhum registro em ${titulo.toLowerCase()}`} descricao={criarEm ? 'Altere os filtros ou cadastre o primeiro registro.' : 'Altere os filtros para tentar novamente.'} />
       ) : (
         <Card className="overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/70 text-left text-xs uppercase tracking-wide text-muted-foreground"><tr>{columns.map((c) => <th key={c.titulo} className="px-4 py-3">{c.titulo}</th>)}</tr></thead>
-                <tbody>{resultado.data.itens.map((item) => <tr key={item.id} className="border-t hover:bg-muted/40">{columns.map((c) => <td key={c.titulo} className="px-4 py-3">{c.render(item)}</td>)}</tr>)}</tbody>
+                <thead className="bg-muted/70 text-left text-xs uppercase tracking-wide text-muted-foreground"><tr>{columns.map((c) => <th key={c.titulo} className="px-4 py-3">{c.titulo}</th>)}{detalheEm && <th className="w-12 px-4 py-3"><span className="sr-only">Abrir</span></th>}</tr></thead>
+                <tbody>{resultado.data.itens.map((item) => <tr key={item.id} tabIndex={detalheEm ? 0 : undefined} onClick={() => detalheEm && navigate(detalheEm(item))} onKeyDown={(e) => { if (detalheEm && (e.key === 'Enter' || e.key === ' ')) navigate(detalheEm(item)) }} className={`border-t hover:bg-muted/40 ${detalheEm ? 'cursor-pointer focus:bg-muted/60 focus:outline-none' : ''}`}>{columns.map((c) => <td key={c.titulo} className="px-4 py-3">{c.render(item)}</td>)}{detalheEm && <td className="px-4 py-3 text-muted-foreground"><ChevronRight className="size-4" aria-label="Abrir registro" /></td>}</tr>)}</tbody>
               </table>
             </div>
             <div className="flex items-center justify-between border-t px-4 py-3 text-xs text-muted-foreground">
