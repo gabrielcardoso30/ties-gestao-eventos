@@ -1,3 +1,3 @@
-import { useParams } from 'react-router-dom'; import { EntityFormPage } from '@/shared/components/generic/EntityFormPage'; import { palestraFields, transformarPalestra } from '../criar/CriarPalestraPage'
-const local = (v: unknown) => v ? new Date(String(v)).toISOString().slice(0, 16) : ''
-export function AtualizarPalestraPage() { const { id } = useParams(); return <EntityFormPage titulo="Editar palestra" descricao="Atualize agenda, sala e conteúdo descritivo." voltarPara={`/palestras/${id}`} endpoint={`/palestras/${id}`} carregarDe={`/palestras/${id}`} mapearCarregado={d => ({ ...d, palestraInicio: local(d.palestraInicio), palestraFim: local(d.palestraFim) })} method="put" fields={palestraFields.filter(f => f.name !== 'eventoId')} transformar={transformarPalestra} invalidar={['palestras']} aoSalvar={() => `/palestras/${id}`} /> }
+import { useParams } from 'react-router-dom'
+import { PalestraForm } from '../shared/PalestraForm'
+export function AtualizarPalestraPage() { const { id } = useParams(); return <PalestraForm palestraId={id} /> }

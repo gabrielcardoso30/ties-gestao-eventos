@@ -189,3 +189,44 @@ test('Auditoria: registro detalha identidade, correlação e estados', async ({ 
   await expect(page.getByText('Estado anterior')).toBeVisible()
   await expect(page.getByText('Estado novo')).toBeVisible()
 })
+
+test('Palestras: dropdowns relacionam evento, sala e múltiplos palestrantes na criação e edição', async ({ page, request }) => {
+  const sufixo = Date.now(); const sessao = JSON.parse(sessaoAdministrador) as { accessToken: string }
+  const headers = { Authorization: `Bearer ${sessao.accessToken}` }
+  const post = async (url: string, data: unknown) => { const r = await request.post(url, { headers, data }); expect(r.ok()).toBeTruthy(); return r.json() }
+  const local = await post('/api/v1/locais', { localNome: `Local Relações ${sufixo}`, enderecoCidade: 'Vila Velha', enderecoUf: 'ES', capacidadeAmbienteUnico: 120 }) as { id: string }
+  const localDetalhe = await (await request.get(`/api/v1/locais/${local.id}`, { headers })).json() as { salas: Array<{ id: string }> }
+  const criarPessoa = (numero: number) => post('/api/v1/pessoas', { pessoaNome: `Palestrante ${numero} ${sufixo}`, pessoaEmail: `palestrante-${numero}-${sufixo}@teste.local` }) as Promise<{ id: string }>
+  const [pessoa1, pessoa2, pessoa3] = await Promise.all([criarPessoa(1), criarPessoa(2), criarPessoa(3)])
+  const inicioEvento = new Date(Date.now() + 5 * 86400000); const fimEvento = new Date(inicioEvento.getTime() + 8 * 3600000)
+  const evento = await post('/api/v1/eventos', { eventoNome: `Evento Relações ${sufixo}`, eventoDataInicio: inicioEvento.toISOString(), eventoDataFim: fimEvento.toISOString(), eventoFormato: 'Presencial', localId: local.id }) as { id: string }
+  const valorData = (data: Date) => new Date(data.getTime() - data.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+
+  await page.goto('/palestras/nova')
+  await page.getByLabel('Título').fill(`Palestra Relações ${sufixo}`)
+  await page.getByLabel('Evento', { exact: true }).selectOption(evento.id)
+  await expect(page.getByLabel('Local do evento')).toHaveValue(local.id)
+  await page.getByLabel('Sala').selectOption(localDetalhe.salas[0].id)
+  await page.getByLabel('Início').fill(valorData(new Date(inicioEvento.getTime() + 3600000)))
+  await page.getByLabel('Fim').fill(valorData(new Date(inicioEvento.getTime() + 2 * 3600000)))
+  await page.getByLabel('Pessoa palestrante').selectOption(pessoa1.id)
+  await page.getByRole('button', { name: 'Adicionar' }).click()
+  await page.getByLabel('Pessoa palestrante').selectOption(pessoa2.id)
+  await page.getByLabel('Papel do palestrante').selectOption('Coautor')
+  await page.getByRole('button', { name: 'Adicionar' }).click()
+  await expect(page.getByText('Palestrantes (2)')).toBeVisible()
+  await page.getByRole('button', { name: 'Salvar' }).click()
+  await expect(page.getByText(`Palestrante 1 ${sufixo}`)).toBeVisible()
+  await expect(page.getByText(`Palestrante 2 ${sufixo}`)).toBeVisible()
+
+  await page.getByRole('link', { name: 'Editar' }).click()
+  await expect(page.getByLabel('Evento', { exact: true })).toBeDisabled()
+  await page.getByLabel('Pessoa palestrante').selectOption(pessoa3.id)
+  await page.getByLabel('Papel do palestrante').selectOption('Mediador')
+  await page.getByRole('button', { name: 'Adicionar' }).click()
+  await page.getByRole('button', { name: `Remover Palestrante 1 ${sufixo}` }).click()
+  await page.getByRole('button', { name: 'Salvar' }).click()
+  await expect(page.getByText(`Palestrante 1 ${sufixo}`)).toHaveCount(0)
+  await expect(page.getByText(`Palestrante 2 ${sufixo}`)).toBeVisible()
+  await expect(page.getByText(`Palestrante 3 ${sufixo}`)).toBeVisible()
+})
