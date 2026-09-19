@@ -1,0 +1,1026 @@
+openapi: '3.1.1'
+info:
+  title: Gestão de Eventos — API
+  description: "API do **monolito modular** de gestão de eventos.\n\n## Convenções\n- Prefixo `api/v1/{modulo}`; recursos no plural, sem verbos na URL.\n- Erros seguem **RFC 9457 (Problem Details)** com a extensão `codigo` (estável, ex.: `Eventos.EventoNaoEncontrado`).\n- Listagens são paginadas: `pagina` e `tamanhoPagina` (máx. 100) e retornam `itens`, `total`, `totalPaginas`.\n- Todo response carrega `X-Correlation-Id` (aceita o enviado pelo cliente) para correlação com logs e traces.\n- Autenticação **Bearer JWT**: obtenha o token em `POST api/v1/identidade/sessoes`.\n\n## Módulos\nCada módulo possui seu schema no banco, seus casos de uso e seu grupo de endpoints (uma tag por módulo)."
+  contact:
+    name: Globalsys
+    url: https://globalsys.com.br
+  version: v1
+servers:
+  - url: http://localhost:5080/
+paths:
+  '/api/v1/locais/{id}':
+    get:
+      tags:
+        - Locais
+      summary: Obtém um local com suas salas
+      description: 'Retorna o local, endereço, capacidade total (soma das salas ativas) e a lista de salas.'
+      operationId: ObterLocal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObterLocalResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    delete:
+      tags:
+        - Locais
+      summary: Exclui (logicamente) um local
+      description: 'Soft delete do local e de suas salas: registros permanecem no banco com `ExcluidoEm`/`ExcluidoPor` preenchidos. **Perfil exigido:** Administrador ou Organizador.'
+      operationId: ExcluirLocal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    put:
+      tags:
+        - Locais
+      summary: Atualiza os dados de um local
+      description: 'Atualiza nome, descrição e endereço. Salas são gerenciadas em `/salas`. **Perfil exigido:** Administrador ou Organizador.'
+      operationId: AtualizarLocal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarLocalRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AtualizarLocalResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/locais/{id}/salas':
+    get:
+      tags:
+        - Locais
+      summary: Lista as salas de um local
+      description: Salas ordenadas por nome. Use `estaAtivo=true` para obter apenas salas disponíveis para alocação.
+      operationId: ListarSalas
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: EstaAtivo
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ListarSalasItemResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    post:
+      tags:
+        - Locais
+      summary: Adiciona uma sala (ambiente) a um local
+      description: "Tipos de sala: `AmbienteUnico`, `Auditorio`, `SalaAula`, `Laboratorio`, `AreaRecreacao`, `Coworking`, `Outro`.\n\nO nome da sala é único dentro do local (`409 Locais.SalaNomeDuplicado`). **Perfil exigido:** Administrador ou Organizador."
+      operationId: AdicionarSala
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdicionarSalaRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdicionarSalaResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  /api/v1/locais:
+    get:
+      tags:
+        - Locais
+      summary: Lista locais (paginado)
+      description: "Lista locais ordenados por nome, com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome ou na cidade (case-insensitive) |\n| `enderecoUf` | UF com 2 letras |\n| `estaAtivo` | `true`/`false` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |"
+      operationId: ListarLocais
+      parameters:
+        - name: Busca
+          in: query
+          schema:
+            type: string
+        - name: EnderecoUf
+          in: query
+          schema:
+            type: string
+        - name: EstaAtivo
+          in: query
+          schema:
+            type: boolean
+        - name: Pagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 1
+        - name: TamanhoPagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 20
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResultOfListarLocaisItemResponse'
+      security:
+        - Bearer: [ ]
+    post:
+      tags:
+        - Locais
+      summary: Cria um local
+      description: "Cria um local para eventos presenciais.\n\n- Se `capacidadeAmbienteUnico` for informado, o local nasce com a sala **\"Ambiente único\"** (regra: local de um ambiente = uma sala).\n- Caso contrário, adicione salas em `POST /api/v1/locais/{id}/salas`.\n- O nome do local é único entre os locais ativos (`409 Locais.LocalNomeDuplicado`).\n\n**Perfil exigido:** Administrador ou Organizador."
+      operationId: CriarLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarLocalRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CriarLocalResponse'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/locais/{id}/salas/{salaId}':
+    delete:
+      tags:
+        - Locais
+      summary: Exclui (logicamente) uma sala
+      description: Um local precisa manter ao menos uma sala (`422 Locais.LocalPrecisaDeUmaSala`). **Perfil exigido:** Administrador ou Organizador.
+      operationId: ExcluirSala
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: salaId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    put:
+      tags:
+        - Locais
+      summary: Atualiza uma sala
+      description: 'Atualiza nome, capacidade, tipo, recursos e disponibilidade (`estaAtivo=false` torna a sala indisponível para novas palestras). **Perfil exigido:** Administrador ou Organizador.'
+      operationId: AtualizarSala
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: salaId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarSalaRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AtualizarSalaResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+components:
+  schemas:
+    AdicionarSalaRequest:
+      required:
+        - salaNome
+        - salaCapacidade
+        - salaTipo
+        - salaRecursos
+      type: object
+      properties:
+        salaNome:
+          type: string
+        salaCapacidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        salaTipo:
+          $ref: '#/components/schemas/SalaTipo'
+        salaRecursos:
+          type:
+            - 'null'
+            - string
+    AdicionarSalaResponse:
+      required:
+        - id
+        - localId
+        - salaNome
+        - salaCapacidade
+        - salaTipo
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        localId:
+          type: string
+          format: uuid
+        salaNome:
+          type: string
+        salaCapacidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        salaTipo:
+          $ref: '#/components/schemas/SalaTipo'
+    AtualizarLocalRequest:
+      required:
+        - localNome
+        - localDescricao
+        - enderecoLogradouro
+        - enderecoNumero
+        - enderecoBairro
+        - enderecoCidade
+        - enderecoUf
+        - enderecoCep
+      type: object
+      properties:
+        localNome:
+          type: string
+        localDescricao:
+          type:
+            - 'null'
+            - string
+        enderecoLogradouro:
+          type:
+            - 'null'
+            - string
+        enderecoNumero:
+          type:
+            - 'null'
+            - string
+        enderecoBairro:
+          type:
+            - 'null'
+            - string
+        enderecoCidade:
+          type: string
+        enderecoUf:
+          type: string
+        enderecoCep:
+          type:
+            - 'null'
+            - string
+    AtualizarLocalResponse:
+      required:
+        - id
+        - localNome
+        - alteradoEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        localNome:
+          type: string
+        alteradoEm:
+          type:
+            - 'null'
+            - string
+          format: date-time
+    AtualizarSalaRequest:
+      required:
+        - salaNome
+        - salaCapacidade
+        - salaTipo
+        - salaRecursos
+        - estaAtivo
+      type: object
+      properties:
+        salaNome:
+          type: string
+        salaCapacidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        salaTipo:
+          $ref: '#/components/schemas/SalaTipo'
+        salaRecursos:
+          type:
+            - 'null'
+            - string
+        estaAtivo:
+          type: boolean
+    AtualizarSalaResponse:
+      required:
+        - id
+        - localId
+        - salaNome
+        - salaCapacidade
+        - salaTipo
+        - estaAtivo
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        localId:
+          type: string
+          format: uuid
+        salaNome:
+          type: string
+        salaCapacidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        salaTipo:
+          $ref: '#/components/schemas/SalaTipo'
+        estaAtivo:
+          type: boolean
+    CriarLocalRequest:
+      required:
+        - localNome
+        - localDescricao
+        - enderecoLogradouro
+        - enderecoNumero
+        - enderecoBairro
+        - enderecoCidade
+        - enderecoUf
+        - enderecoCep
+        - capacidadeAmbienteUnico
+      type: object
+      properties:
+        localNome:
+          type: string
+        localDescricao:
+          type:
+            - 'null'
+            - string
+        enderecoLogradouro:
+          type:
+            - 'null'
+            - string
+        enderecoNumero:
+          type:
+            - 'null'
+            - string
+        enderecoBairro:
+          type:
+            - 'null'
+            - string
+        enderecoCidade:
+          type: string
+        enderecoUf:
+          type: string
+        enderecoCep:
+          type:
+            - 'null'
+            - string
+        capacidadeAmbienteUnico:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - 'null'
+            - integer
+            - string
+          format: int32
+    CriarLocalResponse:
+      required:
+        - id
+        - localNome
+        - salasQuantidade
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        localNome:
+          type: string
+        salasQuantidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+    HttpValidationProblemDetails:
+      type: object
+      properties:
+        type:
+          type:
+            - 'null'
+            - string
+        title:
+          type:
+            - 'null'
+            - string
+        status:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - 'null'
+            - integer
+            - string
+          format: int32
+        detail:
+          type:
+            - 'null'
+            - string
+        instance:
+          type:
+            - 'null'
+            - string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+    ListarLocaisItemResponse:
+      required:
+        - id
+        - localNome
+        - enderecoCidade
+        - enderecoUf
+        - salasQuantidade
+        - localCapacidadeTotal
+        - estaAtivo
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        localNome:
+          type: string
+        enderecoCidade:
+          type: string
+        enderecoUf:
+          type: string
+        salasQuantidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        localCapacidadeTotal:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        estaAtivo:
+          type: boolean
+    ListarSalasItemResponse:
+      required:
+        - id
+        - salaNome
+        - salaCapacidade
+        - salaTipo
+        - salaRecursos
+        - estaAtivo
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        salaNome:
+          type: string
+        salaCapacidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        salaTipo:
+          $ref: '#/components/schemas/SalaTipo'
+        salaRecursos:
+          type:
+            - 'null'
+            - string
+        estaAtivo:
+          type: boolean
+    ObterLocalResponse:
+      required:
+        - id
+        - localNome
+        - localDescricao
+        - enderecoLogradouro
+        - enderecoNumero
+        - enderecoBairro
+        - enderecoCidade
+        - enderecoUf
+        - enderecoCep
+        - localCapacidadeTotal
+        - estaAtivo
+        - criadoEm
+        - alteradoEm
+        - salas
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        localNome:
+          type: string
+        localDescricao:
+          type:
+            - 'null'
+            - string
+        enderecoLogradouro:
+          type:
+            - 'null'
+            - string
+        enderecoNumero:
+          type:
+            - 'null'
+            - string
+        enderecoBairro:
+          type:
+            - 'null'
+            - string
+        enderecoCidade:
+          type: string
+        enderecoUf:
+          type: string
+        enderecoCep:
+          type:
+            - 'null'
+            - string
+        localCapacidadeTotal:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        estaAtivo:
+          type: boolean
+        criadoEm:
+          type: string
+          format: date-time
+        alteradoEm:
+          type:
+            - 'null'
+            - string
+          format: date-time
+        salas:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObterLocalSalaResponse'
+    ObterLocalSalaResponse:
+      required:
+        - id
+        - salaNome
+        - salaCapacidade
+        - salaTipo
+        - salaRecursos
+        - estaAtivo
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        salaNome:
+          type: string
+        salaCapacidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        salaTipo:
+          $ref: '#/components/schemas/SalaTipo'
+        salaRecursos:
+          type:
+            - 'null'
+            - string
+        estaAtivo:
+          type: boolean
+    PagedResultOfListarLocaisItemResponse:
+      required:
+        - itens
+        - pagina
+        - tamanhoPagina
+        - total
+      type: object
+      properties:
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListarLocaisItemResponse'
+        pagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        tamanhoPagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        total:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int64
+        totalPaginas:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+      description: Resultado paginado padrão de todas as listagens da API.
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type:
+            - 'null'
+            - string
+        title:
+          type:
+            - 'null'
+            - string
+        status:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - 'null'
+            - integer
+            - string
+          format: int32
+        detail:
+          type:
+            - 'null'
+            - string
+        instance:
+          type:
+            - 'null'
+            - string
+    SalaTipo:
+      enum:
+        - AmbienteUnico
+        - Auditorio
+        - SalaAula
+        - Laboratorio
+        - AreaRecreacao
+        - Coworking
+        - Outro
+  securitySchemes:
+    Bearer:
+      type: http
+      description: Informe apenas o token (o prefixo `Bearer` é adicionado automaticamente).
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+  - name: Locais
