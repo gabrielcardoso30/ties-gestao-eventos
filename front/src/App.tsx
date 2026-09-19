@@ -28,10 +28,11 @@ import { ObterPalestraPage } from '@/modules/palestras/obter/ObterPalestraPage'
 import { RegistrarUsuarioPage } from '@/modules/identidade/registrar/RegistrarUsuarioPage'
 import { AtualizarPerfisUsuarioPage } from '@/modules/identidade/atualizar-perfis/AtualizarPerfisUsuarioPage'
 import { ObterRegistroAuditoriaPage } from '@/modules/auditoria/obter/ObterRegistroAuditoriaPage'
+import { ValidarCertificadoPage } from '@/modules/palestras/validar-certificado/ValidarCertificadoPage'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 30_000, retry: 1 } } })
 function RotaProtegida() { const { autenticado } = useAuth(); return autenticado ? <Outlet /> : <Navigate to="/login" replace /> }
-export default function App() { return <ThemeProvider><QueryClientProvider client={queryClient}><AuthProvider><BrowserRouter><Routes><Route path="/login" element={<LoginPage />} /><Route element={<RotaProtegida />}><Route element={<AppShell />}><Route index element={<DashboardPage />} />
+export default function App() { return <ThemeProvider><QueryClientProvider client={queryClient}><AuthProvider><BrowserRouter><Routes><Route path="/login" element={<LoginPage />} /><Route path="/certificados/:codigo" element={<ValidarCertificadoPage />} /><Route element={<RotaProtegida />}><Route element={<AppShell />}><Route index element={<DashboardPage />} />
   <Route path="locais" element={<ListarLocaisPage />} /><Route path="locais/novo" element={<CriarLocalPage />} /><Route path="locais/:id" element={<ObterLocalPage />} /><Route path="locais/:id/editar" element={<AtualizarLocalPage />} />
   <Route path="pessoas" element={<ListarPessoasPage />} /><Route path="pessoas/nova" element={<CriarPessoaPage />} /><Route path="pessoas/:id" element={<ObterPessoaPage />} /><Route path="pessoas/:id/editar" element={<AtualizarPessoaPage />} />
   <Route path="eventos" element={<ListarEventosPage />} /><Route path="eventos/novo" element={<CriarEventoPage />} /><Route path="eventos/:id" element={<ObterEventoPage />} /><Route path="eventos/:id/editar" element={<AtualizarEventoPage />} /><Route path="eventos/:id/grade" element={<VisualizarGradeEventoPage />} />
