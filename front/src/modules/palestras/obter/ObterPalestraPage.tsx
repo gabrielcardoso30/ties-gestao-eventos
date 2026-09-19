@@ -1,2 +1,18 @@
-import { useParams } from 'react-router-dom'; import type { ObterPalestraResponse } from '@/shared/api/types'; import { EntityDetailPage } from '@/shared/components/generic/EntityDetailPage'; import { DetailCard } from '@/shared/components/generic/DescriptionList'
-export function ObterPalestraPage() { const { id } = useParams(); return <EntityDetailPage<ObterPalestraResponse & Record<string, unknown>> endpoint={`/palestras/${id}`} queryKey="palestras" backTo="/palestras" editTo={`/palestras/${id}/editar`} deleteEndpoint={`/palestras/${id}`} titulo={x => x.palestraTitulo} descricao={x => x.palestraDescricao} itens={x => [{ label: 'Evento', valor: x.eventoNome }, { label: 'Sala', valor: x.salaNome }, { label: 'Início', valor: new Date(x.palestraInicio).toLocaleString('pt-BR') }, { label: 'Fim', valor: new Date(x.palestraFim).toLocaleString('pt-BR') }, { label: 'Carga horária', valor: `${x.palestraCargaHorariaMinutos} minutos` }, { label: 'Presenças', valor: x.presencasQuantidade }, { label: 'Certificados', valor: x.certificadosQuantidade }]}>{x => <div className="grid gap-4 lg:grid-cols-2"><DetailCard titulo={`Palestrantes (${x.palestrantes.length})`}>{x.palestrantes.map(p => <div key={p.pessoaId} className="py-2 text-sm"><strong>{p.pessoaNome}</strong> · {p.palestrantePapel}</div>)}</DetailCard><DetailCard titulo={`Conteúdos (${x.conteudos.length})`}>{x.conteudos.map(c => <a key={c.id} href={c.conteudoUrl} target="_blank" rel="noreferrer" className="block py-2 text-sm text-primary hover:underline">{c.conteudoTitulo} · {c.conteudoTipo}</a>)}</DetailCard></div>}</EntityDetailPage> }
+import { useParams } from 'react-router-dom'
+import type { ObterPalestraResponse } from '@/shared/api/types'
+import { EntityDetailPage } from '@/shared/components/generic/EntityDetailPage'
+import { DetailCard } from '@/shared/components/generic/DescriptionList'
+
+export function ObterPalestraPage() {
+  const { id } = useParams()
+  return <EntityDetailPage<ObterPalestraResponse & Record<string, unknown>> endpoint={`/palestras/${id}`} queryKey="palestras" backTo="/palestras" editTo={`/palestras/${id}/editar`} deleteEndpoint={`/palestras/${id}`} titulo={x => x.palestraTitulo} descricao={x => x.palestraDescricao} itens={x => [
+    { label: 'Evento', valor: x.eventoNome },
+    { label: 'Trilha', valor: x.trilhaNome },
+    { label: 'Sala', valor: x.salaNome },
+    { label: 'Início', valor: new Date(x.palestraInicio).toLocaleString('pt-BR') },
+    { label: 'Fim', valor: new Date(x.palestraFim).toLocaleString('pt-BR') },
+    { label: 'Carga horária', valor: `${x.palestraCargaHorariaMinutos} minutos` },
+    { label: 'Presenças', valor: x.presencasQuantidade },
+    { label: 'Certificados', valor: x.certificadosQuantidade },
+  ]}>{x => <div className="grid gap-4 lg:grid-cols-2"><DetailCard titulo={`Palestrantes (${x.palestrantes.length})`}>{x.palestrantes.map(p => <div key={p.pessoaId} className="py-2 text-sm"><strong>{p.pessoaNome}</strong> · {p.palestrantePapel}</div>)}</DetailCard><DetailCard titulo={`Conteúdos (${x.conteudos.length})`}>{x.conteudos.map(c => <a key={c.id} href={c.conteudoUrl} target="_blank" rel="noreferrer" className="block py-2 text-sm text-primary hover:underline">{c.conteudoTitulo} · {c.conteudoTipo}</a>)}</DetailCard></div>}</EntityDetailPage>
+}

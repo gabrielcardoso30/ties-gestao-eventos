@@ -219,6 +219,7 @@ test('Palestras: dropdowns relacionam evento, sala e múltiplos palestrantes na 
   await page.getByRole('button', { name: 'Adicionar' }).click()
   await expect(page.getByText('Palestrantes (2)')).toBeVisible()
   await page.getByRole('button', { name: 'Salvar' }).click()
+  await expect(page.getByText('Trilha única', { exact: true })).toBeVisible()
   await expect(page.getByText(`Palestrante 1 ${sufixo}`)).toBeVisible()
   await expect(page.getByText(`Palestrante 2 ${sufixo}`)).toBeVisible()
 
