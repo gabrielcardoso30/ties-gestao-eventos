@@ -13,3 +13,4 @@ dist/
 *.log
 .DS_Store
 .idea/
+.worktrees/
