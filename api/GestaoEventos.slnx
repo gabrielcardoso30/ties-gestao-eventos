@@ -20,6 +20,7 @@
     <Project Path="src/shared/Shared.WebHost/Shared.WebHost.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Tests.Architecture/Tests.Architecture.csproj" />
     <Project Path="tests/Tests.Functional/Tests.Functional.csproj" />
     <Project Path="tests/Tests.Integration/Tests.Integration.csproj" />
     <Project Path="tests/Tests.Unit/Tests.Unit.csproj" />
