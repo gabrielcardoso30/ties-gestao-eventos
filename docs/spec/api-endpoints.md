@@ -63,6 +63,16 @@ Regras (erros com prefixo `Eventos.`):
 - Cancelar inscrição (DELETE): muda situação para Cancelada (não é soft delete) e emite `InscricaoCancelada`; 404 `InscricaoNaoEncontrada`; já cancelada → 422 `InscricaoJaCancelada`.
 Implementa `IEventosModuleApi`: `ObterEventoResumoAsync` (formato/situação como string do enum), `InscricaoConfirmadaExisteAsync`.
 
+**Trilhas** (detalhes em [`trilhas.md`](trilhas.md)): um evento possui trilhas (`Trilha : EntidadeBase { EventoId, TrilhaNome, TrilhaDescricao?, TrilhaCor? }`); toda palestra pertence a uma trilha do seu evento.
+`CriarEventoRequest` aceita `trilhas: [{ trilhaNome, trilhaDescricao?, trilhaCor? }]` opcional e `ObterEventoResponse` devolve `trilhas: [{ id, trilhaNome, trilhaDescricao, trilhaCor, estaAtivo }]`.
+
+| Método | Rota | Política | Request | Response |
+|---|---|---|---|---|
+| GET | `/{id}/trilhas` | auth | — | `IReadOnlyList<ListarTrilhasItemResponse { id, eventoId, trilhaNome, trilhaDescricao, trilhaCor, estaAtivo }>` |
+| POST | `/{id}/trilhas` | gestao | `AdicionarTrilhaRequest { trilhaNome, trilhaDescricao?, trilhaCor? }` | 201 `AdicionarTrilhaResponse { id, eventoId, trilhaNome, trilhaDescricao, trilhaCor }` |
+| PUT | `/{id}/trilhas/{trilhaId}` | gestao | `AtualizarTrilhaRequest { trilhaNome, trilhaDescricao?, trilhaCor?, estaAtivo }` | 200 `AtualizarTrilhaResponse { ... }` |
+| DELETE | `/{id}/trilhas/{trilhaId}` | gestao | — | 204 |
+
 | Método | Rota | Política | Request | Response |
 |---|---|---|---|---|
 | POST | `` | gestao | `CriarEventoRequest { eventoNome, eventoDescricao?, eventoDataInicio, eventoDataFim, eventoFormato, localId?, eventoLinkRemoto?, eventoCapacidadeMaxima? }` | 201 `CriarEventoResponse { id, eventoNome, eventoSituacao }` |
@@ -97,11 +107,11 @@ Implementa `IPalestrasModuleApi.ContarPalestrasDoEventoAsync` (palestras ativas 
 
 | Método | Rota | Política | Request | Response |
 |---|---|---|---|---|
-| POST | `` | gestao | `CriarPalestraRequest { eventoId, salaId?, palestraTitulo, palestraDescricao?, palestraInicio, palestraFim, palestrantes: [{ pessoaId, palestrantePapel }] }` | 201 `CriarPalestraResponse { id, eventoId, palestraTitulo }` |
-| PUT | `/{id}` | gestao | `AtualizarPalestraRequest { salaId?, palestraTitulo, palestraDescricao?, palestraInicio, palestraFim }` | 200 `AtualizarPalestraResponse { id, palestraTitulo, alteradoEm }` |
+| POST | `` | gestao | `CriarPalestraRequest { eventoId, trilhaId, salaId?, palestraTitulo, palestraDescricao?, palestraInicio, palestraFim, palestrantes: [{ pessoaId, palestrantePapel }] }` | 201 `CriarPalestraResponse { id, eventoId, palestraTitulo }` |
+| PUT | `/{id}` | gestao | `AtualizarPalestraRequest { trilhaId, salaId?, palestraTitulo, palestraDescricao?, palestraInicio, palestraFim }` | 200 `AtualizarPalestraResponse { id, palestraTitulo, alteradoEm }` |
 | DELETE | `/{id}` | gestao | — | 204 |
-| GET | `/{id}` | auth | — | 200 `ObterPalestraResponse { id, eventoId, eventoNome, salaId, salaNome, palestraTitulo, palestraDescricao, palestraInicio, palestraFim, palestraCargaHorariaMinutos, palestrantes: [{ pessoaId, pessoaNome, palestrantePapel }], conteudos: [{ id, conteudoTitulo, conteudoTipo, conteudoUrl, conteudoDescricao }], presencasQuantidade, certificadosQuantidade, criadoEm, alteradoEm }` |
-| GET | `` | auth | `ListarPalestrasRequest { eventoId?, busca?, pagina, tamanhoPagina }` | `PagedResult<ListarPalestrasItemResponse { id, eventoId, salaId, palestraTitulo, palestraInicio, palestraFim, palestrantesQuantidade, presencasQuantidade }>` ordenado por `palestraInicio` |
+| GET | `/{id}` | auth | — | 200 `ObterPalestraResponse { id, eventoId, eventoNome, trilhaId, trilhaNome, salaId, salaNome, palestraTitulo, palestraDescricao, palestraInicio, palestraFim, palestraCargaHorariaMinutos, palestrantes: [{ pessoaId, pessoaNome, palestrantePapel }], conteudos: [{ id, conteudoTitulo, conteudoTipo, conteudoUrl, conteudoDescricao }], presencasQuantidade, certificadosQuantidade, criadoEm, alteradoEm }` |
+| GET | `` | auth | `ListarPalestrasRequest { eventoId?, busca?, pagina, tamanhoPagina }` | `PagedResult<ListarPalestrasItemResponse { id, eventoId, trilhaId, salaId, palestraTitulo, palestraInicio, palestraFim, palestrantesQuantidade, presencasQuantidade }>` ordenado por `palestraInicio` |
 | POST | `/{id}/palestrantes` | gestao | `AdicionarPalestranteRequest { pessoaId, palestrantePapel }` | 201 `AdicionarPalestranteResponse { palestraId, pessoaId, palestrantePapel }` |
 | DELETE | `/{id}/palestrantes/{pessoaId}` | gestao | — | 204 |
 | POST | `/{id}/conteudos` | gestao | `AdicionarConteudoRequest { conteudoTitulo, conteudoTipo, conteudoUrl, conteudoDescricao? }` | 201 `AdicionarConteudoResponse { id, palestraId, conteudoTitulo, conteudoTipo, conteudoUrl }` |

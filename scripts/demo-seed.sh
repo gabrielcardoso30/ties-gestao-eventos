@@ -52,13 +52,18 @@ FIM=$(date -u -v+9H +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '+9 hours' +%Y
 EVENTO_ID=$(post /api/v1/eventos "{\"eventoNome\":\"TIES Tech Day $SUFIXO\",\"eventoDescricao\":\"Um dia sobre arquitetura simples que escala.\",\"eventoDataInicio\":\"$INICIO\",\"eventoDataFim\":\"$FIM\",\"eventoFormato\":\"Presencial\",\"localId\":\"$LOCAL_ID\",\"eventoCapacidadeMaxima\":300}" | jq -r '.id')
 echo "evento=$EVENTO_ID"
 
+say "Trilhas do evento"
+TRILHA_ARQ=$(post "/api/v1/eventos/$EVENTO_ID/trilhas" '{"trilhaNome":"Arquitetura","trilhaDescricao":"Decisões estruturais e evolução","trilhaCor":"#1D1DDB"}' | jq -r '.id')
+TRILHA_OBS=$(post "/api/v1/eventos/$EVENTO_ID/trilhas" '{"trilhaNome":"Observabilidade","trilhaDescricao":"Logs, traces e métricas","trilhaCor":"#00F3FF"}' | jq -r '.id')
+echo "trilhas: $TRILHA_ARQ $TRILHA_OBS"
+
 say "Palestras (uma já encerrada, para emitir certificado)"
 P1_INICIO=$(date -u -v-2H +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '-2 hours' +%Y-%m-%dT%H:%M:%SZ)
 P1_FIM=$(date -u -v-1H +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '-1 hour' +%Y-%m-%dT%H:%M:%SZ)
 P2_INICIO=$(date -u -v+1H +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '+1 hour' +%Y-%m-%dT%H:%M:%SZ)
 P2_FIM=$(date -u -v+2H +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '+2 hours' +%Y-%m-%dT%H:%M:%SZ)
-PALESTRA1=$(post /api/v1/palestras "{\"eventoId\":\"$EVENTO_ID\",\"salaId\":\"$AUDITORIO_ID\",\"palestraTitulo\":\"Monolito modular: construindo o futuro de forma simples\",\"palestraDescricao\":\"Módulos, contratos, outbox e observabilidade sem a complexidade de microsserviços.\",\"palestraInicio\":\"$P1_INICIO\",\"palestraFim\":\"$P1_FIM\",\"palestrantes\":[{\"pessoaId\":\"$GABRIEL\",\"palestrantePapel\":\"Principal\"}]}" | jq -r '.id')
-PALESTRA2=$(post /api/v1/palestras "{\"eventoId\":\"$EVENTO_ID\",\"salaId\":\"$LAB_ID\",\"palestraTitulo\":\"Observabilidade na prática com OpenTelemetry\",\"palestraDescricao\":\"Logs, traces e métricas correlacionados.\",\"palestraInicio\":\"$P2_INICIO\",\"palestraFim\":\"$P2_FIM\",\"palestrantes\":[{\"pessoaId\":\"$ANA\",\"palestrantePapel\":\"Principal\"},{\"pessoaId\":\"$GABRIEL\",\"palestrantePapel\":\"Mediador\"}]}" | jq -r '.id')
+PALESTRA1=$(post /api/v1/palestras "{\"eventoId\":\"$EVENTO_ID\",\"trilhaId\":\"$TRILHA_ARQ\",\"salaId\":\"$AUDITORIO_ID\",\"palestraTitulo\":\"Monolito modular: construindo o futuro de forma simples\",\"palestraDescricao\":\"Módulos, contratos, outbox e observabilidade sem a complexidade de microsserviços.\",\"palestraInicio\":\"$P1_INICIO\",\"palestraFim\":\"$P1_FIM\",\"palestrantes\":[{\"pessoaId\":\"$GABRIEL\",\"palestrantePapel\":\"Principal\"}]}" | jq -r '.id')
+PALESTRA2=$(post /api/v1/palestras "{\"eventoId\":\"$EVENTO_ID\",\"trilhaId\":\"$TRILHA_OBS\",\"salaId\":\"$LAB_ID\",\"palestraTitulo\":\"Observabilidade na prática com OpenTelemetry\",\"palestraDescricao\":\"Logs, traces e métricas correlacionados.\",\"palestraInicio\":\"$P2_INICIO\",\"palestraFim\":\"$P2_FIM\",\"palestrantes\":[{\"pessoaId\":\"$ANA\",\"palestrantePapel\":\"Principal\"},{\"pessoaId\":\"$GABRIEL\",\"palestrantePapel\":\"Mediador\"}]}" | jq -r '.id')
 post "/api/v1/palestras/$PALESTRA1/conteudos" '{"conteudoTitulo":"Slides da palestra","conteudoTipo":"Slides","conteudoUrl":"https://example.com/slides-monolito-modular.pdf"}' >/dev/null
 post "/api/v1/palestras/$PALESTRA1/conteudos" '{"conteudoTitulo":"Repositório de exemplo","conteudoTipo":"Link","conteudoUrl":"https://github.com/globalsys/gestao-eventos"}' >/dev/null
 post "/api/v1/palestras/$PALESTRA2/conteudos" '{"conteudoTitulo":"Dashboard de exemplo","conteudoTipo":"Imagem","conteudoUrl":"https://example.com/dashboard.png"}' >/dev/null
