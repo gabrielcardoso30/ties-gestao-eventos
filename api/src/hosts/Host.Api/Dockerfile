@@ -11,8 +11,8 @@ WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_gcServer=1 \
     TZ=America/Sao_Paulo
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* \
-    && groupadd -r app && useradd -r -g app app
+# a imagem base já possui o usuário não-root "app" (uid 1654)
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/publish .
 USER app
 EXPOSE 8080
