@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000A1E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Gestão de Eventos</title>
+    <script>
+      // Aplica o tema salvo antes do primeiro paint para evitar "flash" de tema claro.
+      (function () {
+        try {
+          var tema = localStorage.getItem('gestao-eventos.tema');
+          var escuro = tema === 'dark' || (tema !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (escuro) document.documentElement.classList.add('dark');
+        } catch (e) { /* storage indisponível */ }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
