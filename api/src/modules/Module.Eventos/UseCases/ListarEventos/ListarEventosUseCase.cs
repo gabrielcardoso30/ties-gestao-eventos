@@ -40,12 +40,17 @@ internal sealed class ListarEventosUseCase(EventosDbContext db) : IUseCase<Lista
             query = query.Where(e => e.EventoDataInicio <= request.DataInicioAte.Value);
         }
 
-        var pagina = await query
-            .OrderByDescending(e => e.EventoDataInicio)
-            .ThenBy(e => e.EventoNome)
-            .Select(e => new ListarEventosItemResponse(
-                e.Id, e.EventoNome, e.EventoDataInicio, e.EventoDataFim, e.EventoFormato, e.EventoSituacao, e.LocalId,
-                e.Inscricoes.Count(i => i.InscricaoSituacao == InscricaoSituacao.Confirmada)))
+        var descendente = request.Direcao == OrdenacaoDirecao.Desc;
+        var ordenada = request.OrdenarPor?.ToLowerInvariant() switch
+        {
+            "eventonome" => descendente ? query.OrderByDescending(x => x.EventoNome).ThenByDescending(x => x.Id) : query.OrderBy(x => x.EventoNome).ThenBy(x => x.Id),
+            "eventoformato" => descendente ? query.OrderByDescending(x => x.EventoFormato).ThenByDescending(x => x.Id) : query.OrderBy(x => x.EventoFormato).ThenBy(x => x.Id),
+            "eventosituacao" => descendente ? query.OrderByDescending(x => x.EventoSituacao).ThenByDescending(x => x.Id) : query.OrderBy(x => x.EventoSituacao).ThenBy(x => x.Id),
+            "inscricoesconfirmadas" => descendente ? query.OrderByDescending(x => x.Inscricoes.Count(i => i.InscricaoSituacao == InscricaoSituacao.Confirmada)).ThenByDescending(x => x.Id) : query.OrderBy(x => x.Inscricoes.Count(i => i.InscricaoSituacao == InscricaoSituacao.Confirmada)).ThenBy(x => x.Id),
+            _ => descendente ? query.OrderByDescending(x => x.EventoDataInicio).ThenByDescending(x => x.Id) : query.OrderBy(x => x.EventoDataInicio).ThenBy(x => x.Id)
+        };
+        var pagina = await ordenada
+            .Select(e => new ListarEventosItemResponse(e.Id, e.EventoNome, e.EventoDataInicio, e.EventoDataFim, e.EventoFormato, e.EventoSituacao, e.LocalId, e.Inscricoes.Count(i => i.InscricaoSituacao == InscricaoSituacao.Confirmada)))
             .ToPagedResultAsync(new PagedRequest(request.Pagina, request.TamanhoPagina), cancellationToken);
 
         return pagina;

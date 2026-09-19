@@ -1,68 +1,40 @@
-import { useQuery } from '@tanstack/react-query'
-import { ChevronRight, Plus, Search } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Search, X } from 'lucide-react'
+import { useDeferredValue, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { api } from '@/shared/api/http'
+import { api, type QueryParams } from '@/shared/api/http'
 import type { PagedResult } from '@/shared/api/types'
-import { EmptyState } from '@/shared/components/generic/EmptyState'
-import { ErrorState } from '@/shared/components/generic/ErrorState'
-import { LoadingState } from '@/shared/components/generic/LoadingState'
-import { PageHeader } from '@/shared/components/generic/PageHeader'
-import { Badge } from '@/shared/components/ui/badge'
+import { EmptyState } from './EmptyState'
+import { ErrorState } from './ErrorState'
+import { LoadingState } from './LoadingState'
+import { PageHeader } from './PageHeader'
 import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Input } from '@/shared/components/ui/input'
 
-export interface ResourceColumn<T> {
-  titulo: string
-  render: (item: T) => ReactNode
-}
+export interface ResourceColumn<T> { titulo: string; render: (item: T) => ReactNode; ordenarPor?: string }
+export interface ResourceFilter { chave: string; label: string; tipo?: 'text' | 'select'; opcoes?: Array<{ label: string; value: string }> }
+interface Props<T> { modulo: string; titulo: string; descricao: string; endpoint: string; queryKey: string; columns: ResourceColumn<T>[]; criarEm?: string; detalheEm?: (item: T) => string; filtros?: ResourceFilter[]; busca?: boolean; ordenacaoInicial?: { campo: string; direcao: 'Asc' | 'Desc' } }
 
-interface ResourceListPageProps<T> {
-  modulo: string
-  titulo: string
-  descricao: string
-  endpoint: string
-  queryKey: string
-  columns: ResourceColumn<T>[]
-  criarEm?: string
-  detalheEm?: (item: T) => string
-}
-
-/** Listagem genérica usada por todos os módulos: busca, loading, erro, vazio, tabela e paginação. */
-export function ResourceListPage<T extends { id: string }>({ modulo, titulo, descricao, endpoint, queryKey, columns, criarEm, detalheEm }: ResourceListPageProps<T>) {
-  const [busca, setBusca] = useState('')
-  const navigate = useNavigate()
-  const resultado = useQuery({
-    queryKey: [queryKey, busca],
-    queryFn: ({ signal }) => api.get<PagedResult<T>>(endpoint, { busca, pagina: 1, tamanhoPagina: 20 }, signal),
-  })
-
-  return (
-    <div className="space-y-6">
-      <PageHeader titulo={titulo} descricao={descricao} trilha={[{ label: 'Início', to: '/' }, { label: modulo }]} acoes={criarEm ? <Button asChild variant="cta"><Link to={criarEm}><Plus /> Novo registro</Link></Button> : undefined} />
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-        <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder={`Buscar em ${titulo.toLowerCase()}`} className="pl-9" />
-      </div>
-      {resultado.isLoading ? <LoadingState /> : resultado.isError ? <ErrorState erro={resultado.error} onTentarNovamente={() => { void resultado.refetch() }} /> : !resultado.data?.itens.length ? (
-        <EmptyState titulo={`Nenhum registro em ${titulo.toLowerCase()}`} descricao={criarEm ? 'Altere os filtros ou cadastre o primeiro registro.' : 'Altere os filtros para tentar novamente.'} />
-      ) : (
-        <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/70 text-left text-xs uppercase tracking-wide text-muted-foreground"><tr>{columns.map((c) => <th key={c.titulo} className="px-4 py-3">{c.titulo}</th>)}{detalheEm && <th className="w-12 px-4 py-3"><span className="sr-only">Abrir</span></th>}</tr></thead>
-                <tbody>{resultado.data.itens.map((item) => <tr key={item.id} tabIndex={detalheEm ? 0 : undefined} onClick={() => detalheEm && navigate(detalheEm(item))} onKeyDown={(e) => { if (detalheEm && (e.key === 'Enter' || e.key === ' ')) navigate(detalheEm(item)) }} className={`border-t hover:bg-muted/40 ${detalheEm ? 'cursor-pointer focus:bg-muted/60 focus:outline-none' : ''}`}>{columns.map((c) => <td key={c.titulo} className="px-4 py-3">{c.render(item)}</td>)}{detalheEm && <td className="px-4 py-3 text-muted-foreground"><ChevronRight className="size-4" aria-label="Abrir registro" /></td>}</tr>)}</tbody>
-              </table>
-            </div>
-            <div className="flex items-center justify-between border-t px-4 py-3 text-xs text-muted-foreground">
-              <span>{resultado.data.total} registro(s)</span><Badge variant="secondary">Página {resultado.data.pagina} de {resultado.data.totalPaginas || 1}</Badge>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+/** DataTable genérica server-side: busca, filtros, ordenação, paginação e tamanho são enviados à API. */
+export function ResourceListPage<T extends { id: string }>({ modulo, titulo, descricao, endpoint, queryKey, columns, criarEm, detalheEm, filtros = [], busca: permiteBusca = true, ordenacaoInicial }: Props<T>) {
+  const [busca, setBusca] = useState(''); const buscaDiferida = useDeferredValue(busca); const [pagina, setPagina] = useState(1); const [tamanhoPagina, setTamanhoPagina] = useState(20)
+  const [ordenarPor, setOrdenarPor] = useState(ordenacaoInicial?.campo ?? columns.find(c => c.ordenarPor)?.ordenarPor ?? ''); const [direcao, setDirecao] = useState<'Asc' | 'Desc'>(ordenacaoInicial?.direcao ?? 'Asc'); const [valoresFiltros, setValoresFiltros] = useState<Record<string, string>>({}); const navigate = useNavigate()
+  const parametros: QueryParams = { busca: permiteBusca ? buscaDiferida : undefined, pagina, tamanhoPagina, ordenarPor: ordenarPor || undefined, direcao, ...valoresFiltros }
+  const resultado = useQuery({ queryKey: [queryKey, parametros], queryFn: ({ signal }) => api.get<PagedResult<T>>(endpoint, parametros, signal), placeholderData: keepPreviousData })
+  const totalPaginas = Math.max(resultado.data?.totalPaginas ?? 1, 1); const inicio = resultado.data?.total ? (resultado.data.pagina - 1) * resultado.data.tamanhoPagina + 1 : 0; const fim = resultado.data ? Math.min(resultado.data.pagina * resultado.data.tamanhoPagina, resultado.data.total) : 0
+  const ordenar = (campo: string) => { setPagina(1); if (ordenarPor === campo) setDirecao(atual => atual === 'Asc' ? 'Desc' : 'Asc'); else { setOrdenarPor(campo); setDirecao('Asc') } }
+  const filtrar = (chave: string, valor: string) => { setPagina(1); setValoresFiltros(atuais => ({ ...atuais, [chave]: valor })) }; const limpar = () => { setBusca(''); setValoresFiltros({}); setPagina(1) }; const possuiFiltro = Boolean(busca || Object.values(valoresFiltros).some(Boolean))
+  return <div className="space-y-6">
+    <PageHeader titulo={titulo} descricao={descricao} trilha={[{ label: 'Início', to: '/' }, { label: modulo }]} acoes={criarEm ? <Button asChild variant="cta"><Link to={criarEm}><Plus /> Novo registro</Link></Button> : undefined} />
+    <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4">
+      {permiteBusca && <label className="min-w-64 flex-1 space-y-1 text-xs font-medium text-muted-foreground"><span>Buscar</span><div className="relative"><Search className="absolute left-3 top-2.5 size-4" /><Input value={busca} onChange={e => { setBusca(e.target.value); setPagina(1) }} placeholder={`Buscar em ${titulo.toLowerCase()}`} className="pl-9" /></div></label>}
+      {filtros.map(filtro => <label key={filtro.chave} className="min-w-44 space-y-1 text-xs font-medium text-muted-foreground"><span>{filtro.label}</span>{filtro.tipo === 'select' ? <select aria-label={filtro.label} value={valoresFiltros[filtro.chave] ?? ''} onChange={e => filtrar(filtro.chave, e.target.value)} className="h-9 w-full rounded-md border bg-background px-3 text-sm text-foreground"><option value="">Todos</option>{filtro.opcoes?.map(opcao => <option key={opcao.value} value={opcao.value}>{opcao.label}</option>)}</select> : <Input aria-label={filtro.label} value={valoresFiltros[filtro.chave] ?? ''} onChange={e => filtrar(filtro.chave, e.target.value)} />}</label>)}
+      {possuiFiltro && <Button type="button" variant="ghost" onClick={limpar}><X /> Limpar filtros</Button>}
     </div>
-  )
+    {resultado.isLoading ? <LoadingState /> : resultado.isError ? <ErrorState erro={resultado.error} onTentarNovamente={() => void resultado.refetch()} /> : !resultado.data?.itens.length ? <EmptyState titulo={`Nenhum registro em ${titulo.toLowerCase()}`} descricao={criarEm ? 'Altere os filtros ou cadastre o primeiro registro.' : 'Altere os filtros para tentar novamente.'} /> : <Card className="overflow-hidden" aria-busy={resultado.isFetching}><CardContent className="p-0"><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-muted/70 text-left text-xs uppercase tracking-wide text-muted-foreground"><tr>{columns.map(c => <th key={c.titulo} scope="col" className="px-4 py-3">{c.ordenarPor ? <button type="button" className="flex items-center gap-1.5 font-semibold uppercase hover:text-foreground" onClick={() => ordenar(c.ordenarPor!)} aria-label={`Ordenar por ${c.titulo}`}>{c.titulo}{ordenarPor !== c.ordenarPor ? <ArrowUpDown className="size-3.5" /> : direcao === 'Asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />}</button> : c.titulo}</th>)}{detalheEm && <th className="w-12 px-4 py-3"><span className="sr-only">Abrir</span></th>}</tr></thead><tbody>{resultado.data.itens.map(item => <tr key={item.id} tabIndex={detalheEm ? 0 : undefined} onClick={() => detalheEm && navigate(detalheEm(item))} onKeyDown={e => { if (detalheEm && (e.key === 'Enter' || e.key === ' ')) navigate(detalheEm(item)) }} className={`border-t hover:bg-muted/40 ${detalheEm ? 'cursor-pointer focus:bg-muted/60 focus:outline-none' : ''}`}>{columns.map(c => <td key={c.titulo} className="px-4 py-3">{c.render(item)}</td>)}{detalheEm && <td className="px-4 py-3 text-muted-foreground"><ChevronRight className="size-4" aria-label="Abrir registro" /></td>}</tr>)}</tbody></table></div>
+      <div className="flex flex-col gap-3 border-t px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><span>Exibindo {inicio}–{fim} de {resultado.data.total} registro(s)</span><div className="flex flex-wrap items-center gap-2"><label className="flex items-center gap-2">Linhas por página<select aria-label="Linhas por página" value={tamanhoPagina} onChange={e => { setTamanhoPagina(Number(e.target.value)); setPagina(1) }} className="h-8 rounded-md border bg-background px-2 text-foreground">{[10, 20, 50, 100].map(tamanho => <option key={tamanho}>{tamanho}</option>)}</select></label><span className="min-w-28 text-center">Página {resultado.data.pagina} de {totalPaginas}</span><Button size="icon-sm" variant="outline" aria-label="Primeira página" disabled={pagina <= 1} onClick={() => setPagina(1)}><ChevronsLeft /></Button><Button size="icon-sm" variant="outline" aria-label="Página anterior" disabled={pagina <= 1} onClick={() => setPagina(p => Math.max(1, p - 1))}><ChevronLeft /></Button><Button size="icon-sm" variant="outline" aria-label="Próxima página" disabled={pagina >= totalPaginas} onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}><ChevronRight /></Button><Button size="icon-sm" variant="outline" aria-label="Última página" disabled={pagina >= totalPaginas} onClick={() => setPagina(totalPaginas)}><ChevronsRight /></Button></div></div>
+    </CardContent></Card>}
+  </div>
 }

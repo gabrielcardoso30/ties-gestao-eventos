@@ -24,6 +24,7 @@ internal sealed class ListarUsuariosEndpoint : IEndpoint
                 | `busca` | Texto contido no nome ou no e-mail (case-insensitive) |
                 | `estaAtivo` | `true`/`false` |
                 | `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |
+                | `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |
 
                 **Perfil exigido:** Administrador.
                 """)

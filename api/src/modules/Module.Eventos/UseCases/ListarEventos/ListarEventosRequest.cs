@@ -10,4 +10,6 @@ public sealed record ListarEventosRequest(
     DateTimeOffset? DataInicioDe,
     DateTimeOffset? DataInicioAte,
     int Pagina = 1,
-    int TamanhoPagina = 20);
+    int TamanhoPagina = 20,
+    string? OrdenarPor = null,
+    global::Shared.Contracts.Common.OrdenacaoDirecao Direcao = global::Shared.Contracts.Common.OrdenacaoDirecao.Desc);

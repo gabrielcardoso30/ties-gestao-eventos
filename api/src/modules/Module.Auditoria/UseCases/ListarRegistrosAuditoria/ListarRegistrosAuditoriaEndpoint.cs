@@ -28,6 +28,7 @@ internal sealed class ListarRegistrosAuditoriaEndpoint : IEndpoint
                 | `operacao` | `Inclusao`, `Alteracao` ou `Exclusao` |
                 | `ocorridoDe`, `ocorridoAte` | Intervalo (ISO-8601, inclusivo) do momento da alteração |
                 | `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |
+                | `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |
 
                 A listagem não traz os dados antes/depois; use `GET /api/v1/auditoria/registros/{id}` para o detalhe.
                 **Perfil exigido:** Administrador.

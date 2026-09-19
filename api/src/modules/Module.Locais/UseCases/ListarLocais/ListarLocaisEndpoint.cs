@@ -24,6 +24,7 @@ internal sealed class ListarLocaisEndpoint : IEndpoint
                 | `enderecoUf` | UF com 2 letras |
                 | `estaAtivo` | `true`/`false` |
                 | `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |
+                | `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |
                 """)
             .WithValidation<ListarLocaisRequest>()
             .Produces<PagedResult<ListarLocaisItemResponse>>();

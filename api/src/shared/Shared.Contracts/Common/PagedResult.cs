@@ -1,5 +1,7 @@
 namespace Shared.Contracts.Common;
 
+public enum OrdenacaoDirecao { Asc, Desc }
+
 /// <summary>Resultado paginado padrão de todas as listagens da API.</summary>
 public sealed record PagedResult<T>(IReadOnlyList<T> Itens, int Pagina, int TamanhoPagina, long Total)
 {

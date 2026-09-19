@@ -30,8 +30,15 @@ internal sealed class ListarLocaisUseCase(LocaisDbContext db) : IUseCase<ListarL
             query = query.Where(l => l.EstaAtivo == request.EstaAtivo.Value);
         }
 
-        var pagina = await query
-            .OrderBy(l => l.LocalNome)
+        var descendente = request.Direcao == OrdenacaoDirecao.Desc;
+        var ordenada = request.OrdenarPor?.ToLowerInvariant() switch
+        {
+            "enderecocidade" => descendente ? query.OrderByDescending(x => x.EnderecoCidade).ThenByDescending(x => x.Id) : query.OrderBy(x => x.EnderecoCidade).ThenBy(x => x.Id),
+            "salasquantidade" => descendente ? query.OrderByDescending(x => x.Salas.Count).ThenByDescending(x => x.Id) : query.OrderBy(x => x.Salas.Count).ThenBy(x => x.Id),
+            "localcapacidadetotal" => descendente ? query.OrderByDescending(x => x.Salas.Sum(s => s.SalaCapacidade)).ThenByDescending(x => x.Id) : query.OrderBy(x => x.Salas.Sum(s => s.SalaCapacidade)).ThenBy(x => x.Id),
+            _ => descendente ? query.OrderByDescending(x => x.LocalNome).ThenByDescending(x => x.Id) : query.OrderBy(x => x.LocalNome).ThenBy(x => x.Id)
+        };
+        var pagina = await ordenada
             .Select(l => new ListarLocaisItemResponse(l.Id, l.LocalNome, l.EnderecoCidade, l.EnderecoUf, l.Salas.Count, l.Salas.Sum(s => s.SalaCapacidade), l.EstaAtivo))
             .ToPagedResultAsync(new PagedRequest(request.Pagina, request.TamanhoPagina), cancellationToken);
 

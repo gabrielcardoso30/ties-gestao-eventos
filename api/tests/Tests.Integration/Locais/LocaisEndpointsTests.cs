@@ -141,10 +141,19 @@ public sealed class LocaisEndpointsTests(ApiFactory factory)
             (await client.PostAsJsonAsync("/api/v1/locais", NovoLocal($"Pag {marcador} {i}"))).EnsureSuccessStatusCode();
         }
 
-        var pagina = await client.GetFromJsonAsync<Paginado<LocalItem>>($"/api/v1/locais?busca={marcador}&pagina=1&tamanhoPagina=2");
+        var pagina = await client.GetFromJsonAsync<Paginado<LocalItem>>($"/api/v1/locais?busca={marcador}&pagina=1&tamanhoPagina=2&ordenarPor=localNome&direcao=Desc");
         pagina!.Total.ShouldBe(3);
         pagina.Itens.Count.ShouldBe(2);
         pagina.TotalPaginas.ShouldBe(2);
+        pagina.Itens.Select(x => x.LocalNome).ShouldBeInOrder(SortDirection.Descending);
+    }
+
+    [Fact]
+    public async Task Listagem_deve_rejeitar_campo_de_ordenacao_nao_permitido()
+    {
+        var response = await factory.ClienteAutenticado().GetAsync("/api/v1/locais?ordenarPor=sqlInjection");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await ProblemDetailsDeTeste.LerAsync(response)).Codigo.ShouldBe("Validacao");
     }
 
     [Fact]

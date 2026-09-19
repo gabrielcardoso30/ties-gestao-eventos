@@ -52,9 +52,16 @@ internal sealed class ListarRegistrosAuditoriaUseCase(AuditoriaDbContext db) : I
             query = query.Where(r => r.OcorridoEm <= request.OcorridoAte.Value);
         }
 
-        var pagina = await query
-            .OrderByDescending(r => r.OcorridoEm)
-            .ThenByDescending(r => r.Id)
+        var descendente = request.Direcao == OrdenacaoDirecao.Desc;
+        var ordenada = request.OrdenarPor?.ToLowerInvariant() switch
+        {
+            "modulo" => descendente ? query.OrderByDescending(x => x.Modulo).ThenByDescending(x => x.Id) : query.OrderBy(x => x.Modulo).ThenBy(x => x.Id),
+            "entidadenome" => descendente ? query.OrderByDescending(x => x.EntidadeNome).ThenByDescending(x => x.Id) : query.OrderBy(x => x.EntidadeNome).ThenBy(x => x.Id),
+            "operacao" => descendente ? query.OrderByDescending(x => x.Operacao).ThenByDescending(x => x.Id) : query.OrderBy(x => x.Operacao).ThenBy(x => x.Id),
+            "usuarionome" => descendente ? query.OrderByDescending(x => x.UsuarioNome).ThenByDescending(x => x.Id) : query.OrderBy(x => x.UsuarioNome).ThenBy(x => x.Id),
+            _ => descendente ? query.OrderByDescending(x => x.OcorridoEm).ThenByDescending(x => x.Id) : query.OrderBy(x => x.OcorridoEm).ThenBy(x => x.Id)
+        };
+        var pagina = await ordenada
             .Select(r => new ListarRegistrosAuditoriaItemResponse(r.Id, r.Modulo, r.EntidadeNome, r.EntidadeId, r.Operacao, r.UsuarioNome, r.TraceId, r.OcorridoEm))
             .ToPagedResultAsync(new PagedRequest(request.Pagina, request.TamanhoPagina), cancellationToken);
 

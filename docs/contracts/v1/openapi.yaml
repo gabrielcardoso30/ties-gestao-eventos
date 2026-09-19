@@ -7,7 +7,7 @@ info:
     url: https://globalsys.com.br
   version: v1
 servers:
-  - url: http://127.0.0.1:5762/
+  - url: http://localhost:5761/
 paths:
   '/api/v1/auditoria/registros/{id}':
     get:
@@ -61,7 +61,7 @@ paths:
       tags:
         - Auditoria
       summary: Lista registros de auditoria (paginado)
-      description: "Consulta a trilha de auditoria, do mais recente para o mais antigo (`ocorridoEm` desc). Filtros opcionais, combinados com AND:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `modulo` | Módulo de origem (ex.: `Locais`, `Pessoas`) |\n| `entidadeNome` | Nome da entidade (ex.: `Local`, `Sala`, `Pessoa`) |\n| `entidadeId` | Identificador da entidade (texto; normalmente um Guid) |\n| `usuarioId` | Guid do usuário que fez a alteração |\n| `operacao` | `Inclusao`, `Alteracao` ou `Exclusao` |\n| `ocorridoDe`, `ocorridoAte` | Intervalo (ISO-8601, inclusivo) do momento da alteração |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n\nA listagem não traz os dados antes/depois; use `GET /api/v1/auditoria/registros/{id}` para o detalhe.\n**Perfil exigido:** Administrador."
+      description: "Consulta a trilha de auditoria, do mais recente para o mais antigo (`ocorridoEm` desc). Filtros opcionais, combinados com AND:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `modulo` | Módulo de origem (ex.: `Locais`, `Pessoas`) |\n| `entidadeNome` | Nome da entidade (ex.: `Local`, `Sala`, `Pessoa`) |\n| `entidadeId` | Identificador da entidade (texto; normalmente um Guid) |\n| `usuarioId` | Guid do usuário que fez a alteração |\n| `operacao` | `Inclusao`, `Alteracao` ou `Exclusao` |\n| `ocorridoDe`, `ocorridoAte` | Intervalo (ISO-8601, inclusivo) do momento da alteração |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n| `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |\n\nA listagem não traz os dados antes/depois; use `GET /api/v1/auditoria/registros/{id}` para o detalhe.\n**Perfil exigido:** Administrador."
       operationId: ListarRegistrosAuditoria
       parameters:
         - name: Modulo
@@ -113,6 +113,15 @@ paths:
               - string
             format: int32
             default: 20
+        - name: OrdenarPor
+          in: query
+          schema:
+            type: string
+        - name: Direcao
+          in: query
+          schema:
+            default: Desc
+            $ref: '#/components/schemas/OrdenacaoDirecao'
       responses:
         '401':
           description: Unauthorized
@@ -578,7 +587,7 @@ paths:
       tags:
         - Eventos
       summary: Lista eventos (paginado)
-      description: "Lista eventos ordenados por data de início (mais recentes primeiro), com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome ou na descrição (case-insensitive) |\n| `eventoSituacao` | `Rascunho`, `Publicado`, `EmAndamento`, `Encerrado` ou `Cancelado` |\n| `eventoFormato` | `Presencial`, `Remoto` ou `Hibrido` |\n| `dataInicioDe`, `dataInicioAte` | Intervalo (ISO-8601) aplicado sobre `eventoDataInicio` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n\nCada item traz `inscricoesConfirmadas`. **Perfil exigido:** qualquer usuário autenticado."
+      description: "Lista eventos ordenados por data de início (mais recentes primeiro), com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome ou na descrição (case-insensitive) |\n| `eventoSituacao` | `Rascunho`, `Publicado`, `EmAndamento`, `Encerrado` ou `Cancelado` |\n| `eventoFormato` | `Presencial`, `Remoto` ou `Hibrido` |\n| `dataInicioDe`, `dataInicioAte` | Intervalo (ISO-8601) aplicado sobre `eventoDataInicio` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n| `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |\n\nCada item traz `inscricoesConfirmadas`. **Perfil exigido:** qualquer usuário autenticado."
       operationId: ListarEventos
       parameters:
         - name: Busca
@@ -621,6 +630,15 @@ paths:
               - string
             format: int32
             default: 20
+        - name: OrdenarPor
+          in: query
+          schema:
+            type: string
+        - name: Direcao
+          in: query
+          schema:
+            default: Desc
+            $ref: '#/components/schemas/OrdenacaoDirecao'
       responses:
         '401':
           description: Unauthorized
@@ -1012,7 +1030,7 @@ paths:
       tags:
         - Identidade
       summary: Lista usuários (paginado)
-      description: "Lista usuários ordenados por nome, com seus perfis e último acesso. Filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome ou no e-mail (case-insensitive) |\n| `estaAtivo` | `true`/`false` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n\n**Perfil exigido:** Administrador."
+      description: "Lista usuários ordenados por nome, com seus perfis e último acesso. Filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome ou no e-mail (case-insensitive) |\n| `estaAtivo` | `true`/`false` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n| `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |\n\n**Perfil exigido:** Administrador."
       operationId: ListarUsuarios
       parameters:
         - name: Busca
@@ -1041,6 +1059,15 @@ paths:
               - string
             format: int32
             default: 20
+        - name: OrdenarPor
+          in: query
+          schema:
+            type: string
+        - name: Direcao
+          in: query
+          schema:
+            default: Asc
+            $ref: '#/components/schemas/OrdenacaoDirecao'
       responses:
         '401':
           description: Unauthorized
@@ -1510,7 +1537,7 @@ paths:
       tags:
         - Locais
       summary: Lista locais (paginado)
-      description: "Lista locais ordenados por nome, com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome ou na cidade (case-insensitive) |\n| `enderecoUf` | UF com 2 letras |\n| `estaAtivo` | `true`/`false` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |"
+      description: "Lista locais ordenados por nome, com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome ou na cidade (case-insensitive) |\n| `enderecoUf` | UF com 2 letras |\n| `estaAtivo` | `true`/`false` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n| `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |"
       operationId: ListarLocais
       parameters:
         - name: Busca
@@ -1543,6 +1570,15 @@ paths:
               - string
             format: int32
             default: 20
+        - name: OrdenarPor
+          in: query
+          schema:
+            type: string
+        - name: Direcao
+          in: query
+          schema:
+            default: Asc
+            $ref: '#/components/schemas/OrdenacaoDirecao'
       responses:
         '401':
           description: Unauthorized
@@ -2183,7 +2219,7 @@ paths:
       tags:
         - Palestras
       summary: Lista palestras (paginado)
-      description: "Lista palestras ordenadas por `palestraInicio`, com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `eventoId` | Somente palestras do evento |\n| `busca` | Texto contido no título (case-insensitive) |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |"
+      description: "Lista palestras ordenadas por `palestraInicio`, com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `eventoId` | Somente palestras do evento |\n| `busca` | Texto contido no título (case-insensitive) |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n| `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |"
       operationId: ListarPalestras
       parameters:
         - name: EventoId
@@ -2213,6 +2249,15 @@ paths:
               - string
             format: int32
             default: 20
+        - name: OrdenarPor
+          in: query
+          schema:
+            type: string
+        - name: Direcao
+          in: query
+          schema:
+            default: Asc
+            $ref: '#/components/schemas/OrdenacaoDirecao'
       responses:
         '401':
           description: Unauthorized
@@ -2662,7 +2707,7 @@ paths:
       tags:
         - Pessoas
       summary: Lista pessoas (paginado)
-      description: "Lista pessoas ordenadas por nome, com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome, no e-mail ou na empresa (case-insensitive, até 100 caracteres) |\n| `estaAtivo` | `true`/`false` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n\nPessoas excluídas nunca são retornadas. **Perfil exigido:** qualquer usuário autenticado."
+      description: "Lista pessoas ordenadas por nome, com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome, no e-mail ou na empresa (case-insensitive, até 100 caracteres) |\n| `estaAtivo` | `true`/`false` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n| `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |\n\nPessoas excluídas nunca são retornadas. **Perfil exigido:** qualquer usuário autenticado."
       operationId: ListarPessoas
       parameters:
         - name: Busca
@@ -2691,6 +2736,15 @@ paths:
               - string
             format: int32
             default: 20
+        - name: OrdenarPor
+          in: query
+          schema:
+            type: string
+        - name: Direcao
+          in: query
+          schema:
+            default: Asc
+            $ref: '#/components/schemas/OrdenacaoDirecao'
       responses:
         '401':
           description: Unauthorized
@@ -4518,6 +4572,10 @@ components:
             - 'null'
             - string
           format: date-time
+    OrdenacaoDirecao:
+      enum:
+        - Asc
+        - Desc
     PagedResultOfListarEventosItemResponse:
       required:
         - itens

@@ -16,6 +16,7 @@ internal sealed class ListarRegistrosAuditoriaValidator : AbstractValidator<List
         RuleFor(r => r.Modulo).MaximumLength(50).WithMessage(MensagensValidacao.TamanhoMaximo);
         RuleFor(r => r.EntidadeNome).MaximumLength(100).WithMessage(MensagensValidacao.TamanhoMaximo);
         RuleFor(r => r.EntidadeId).MaximumLength(100).WithMessage(MensagensValidacao.TamanhoMaximo);
+        RuleFor(r => r.OrdenarPor).Must(c => new[] { "modulo", "entidadeNome", "operacao", "usuarioNome", "ocorridoEm" }.Contains(c!, StringComparer.OrdinalIgnoreCase)).When(r => !string.IsNullOrWhiteSpace(r.OrdenarPor));
         RuleFor(r => r.Operacao)
             .Must(o => Operacoes.Contains(o!.Trim(), StringComparer.OrdinalIgnoreCase))
             .When(r => !string.IsNullOrWhiteSpace(r.Operacao))

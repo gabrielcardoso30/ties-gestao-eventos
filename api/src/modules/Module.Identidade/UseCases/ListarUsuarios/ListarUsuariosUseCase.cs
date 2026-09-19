@@ -25,16 +25,16 @@ internal sealed class ListarUsuariosUseCase(IdentidadeDbContext db) : IUseCase<L
             query = query.Where(u => u.EstaAtivo == request.EstaAtivo.Value);
         }
 
-        var pagina = await query
-            .OrderBy(u => u.UsuarioNome)
-            .ThenBy(u => u.Id)
-            .Select(u => new ListarUsuariosItemResponse(
-                u.Id,
-                u.UsuarioNome,
-                u.Email ?? string.Empty,
-                db.UsuarioPerfis.Where(up => up.UserId == u.Id).Join(db.Perfis, up => up.RoleId, p => p.Id, (up, p) => p.Name!).OrderBy(nome => nome).ToList(),
-                u.EstaAtivo,
-                u.UltimoAcessoEm))
+        var descendente = request.Direcao == OrdenacaoDirecao.Desc;
+        var ordenada = request.OrdenarPor?.ToLowerInvariant() switch
+        {
+            "usuarioemail" => descendente ? query.OrderByDescending(x => x.Email).ThenByDescending(x => x.Id) : query.OrderBy(x => x.Email).ThenBy(x => x.Id),
+            "estaativo" => descendente ? query.OrderByDescending(x => x.EstaAtivo).ThenByDescending(x => x.Id) : query.OrderBy(x => x.EstaAtivo).ThenBy(x => x.Id),
+            "ultimoacessoem" => descendente ? query.OrderByDescending(x => x.UltimoAcessoEm).ThenByDescending(x => x.Id) : query.OrderBy(x => x.UltimoAcessoEm).ThenBy(x => x.Id),
+            _ => descendente ? query.OrderByDescending(x => x.UsuarioNome).ThenByDescending(x => x.Id) : query.OrderBy(x => x.UsuarioNome).ThenBy(x => x.Id)
+        };
+        var pagina = await ordenada
+            .Select(u => new ListarUsuariosItemResponse(u.Id, u.UsuarioNome, u.Email ?? string.Empty, db.UsuarioPerfis.Where(up => up.UserId == u.Id).Join(db.Perfis, up => up.RoleId, p => p.Id, (up, p) => p.Name!).OrderBy(nome => nome).ToList(), u.EstaAtivo, u.UltimoAcessoEm))
             .ToPagedResultAsync(new PagedRequest(request.Pagina, request.TamanhoPagina), cancellationToken);
 
         return pagina;

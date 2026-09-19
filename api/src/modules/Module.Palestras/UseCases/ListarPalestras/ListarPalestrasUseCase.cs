@@ -24,10 +24,16 @@ internal sealed class ListarPalestrasUseCase(PalestrasDbContext db) : IUseCase<L
             query = query.Where(p => EF.Functions.ILike(p.PalestraTitulo, busca));
         }
 
-        var pagina = await query
-            .OrderBy(p => p.PalestraInicio).ThenBy(p => p.PalestraTitulo)
-            .Select(p => new ListarPalestrasItemResponse(
-                p.Id, p.EventoId, p.TrilhaId, p.SalaId, p.PalestraTitulo, p.PalestraInicio, p.PalestraFim, p.Palestrantes.Count, p.Presencas.Count))
+        var descendente = request.Direcao == OrdenacaoDirecao.Desc;
+        var ordenada = request.OrdenarPor?.ToLowerInvariant() switch
+        {
+            "palestratitulo" => descendente ? query.OrderByDescending(x => x.PalestraTitulo).ThenByDescending(x => x.Id) : query.OrderBy(x => x.PalestraTitulo).ThenBy(x => x.Id),
+            "palestrantesquantidade" => descendente ? query.OrderByDescending(x => x.Palestrantes.Count).ThenByDescending(x => x.Id) : query.OrderBy(x => x.Palestrantes.Count).ThenBy(x => x.Id),
+            "presencasquantidade" => descendente ? query.OrderByDescending(x => x.Presencas.Count).ThenByDescending(x => x.Id) : query.OrderBy(x => x.Presencas.Count).ThenBy(x => x.Id),
+            _ => descendente ? query.OrderByDescending(x => x.PalestraInicio).ThenByDescending(x => x.Id) : query.OrderBy(x => x.PalestraInicio).ThenBy(x => x.Id)
+        };
+        var pagina = await ordenada
+            .Select(p => new ListarPalestrasItemResponse(p.Id, p.EventoId, p.TrilhaId, p.SalaId, p.PalestraTitulo, p.PalestraInicio, p.PalestraFim, p.Palestrantes.Count, p.Presencas.Count))
             .ToPagedResultAsync(new PagedRequest(request.Pagina, request.TamanhoPagina), cancellationToken);
 
         return pagina;

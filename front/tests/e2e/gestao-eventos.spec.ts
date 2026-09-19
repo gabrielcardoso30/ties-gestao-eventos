@@ -339,3 +339,30 @@ test('Eventos: usuário abre a grade e visualiza palestras distribuídas por tri
   await page.getByText(`Monolito Modular ${sufixo}`).click()
   await expect(page.getByRole('heading', { name: `Monolito Modular ${sufixo}` })).toBeVisible()
 })
+
+test('DataTable: pagina, ordena, filtra e altera quantidade de linhas pelo backend', async ({ page, request }) => {
+  const marcador = `Tabela${Date.now()}`; const sessao = JSON.parse(sessaoAdministrador) as { accessToken: string }; const headers = { Authorization: `Bearer ${sessao.accessToken}` }
+  for (let indice = 0; indice < 12; indice++) {
+    const resposta = await request.post('/api/v1/locais', { headers, data: { localNome: `${marcador} ${indice.toString().padStart(2, '0')}`, enderecoCidade: 'Cidade teste', enderecoUf: indice % 2 === 0 ? 'ES' : 'RJ', capacidadeAmbienteUnico: 20 } })
+    expect(resposta.status()).toBe(201)
+  }
+
+  await page.goto('/locais')
+  await page.getByPlaceholder('Buscar em locais').fill(marcador)
+  await page.getByLabel('Linhas por página').selectOption('10')
+  await expect(page.getByText('Exibindo 1–10 de 12 registro(s)')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Próxima página' })).toBeEnabled()
+  await page.getByRole('button', { name: 'Próxima página' }).click()
+  await expect(page.getByText('Exibindo 11–12 de 12 registro(s)')).toBeVisible()
+
+  const respostaOrdenada = page.waitForResponse(resposta => resposta.url().includes('/api/v1/locais') && resposta.url().includes('ordenarPor=localNome') && resposta.url().includes('direcao=Desc'))
+  await page.getByRole('button', { name: 'Ordenar por Local' }).click()
+  await respostaOrdenada
+  await expect(page.locator('tbody tr').first()).toContainText(`${marcador} 11`)
+
+  const respostaFiltrada = page.waitForResponse(resposta => resposta.url().includes('/api/v1/locais') && resposta.url().includes('enderecoUf=RJ'))
+  await page.getByLabel('UF').fill('RJ')
+  await respostaFiltrada
+  await expect(page.getByText('Exibindo 1–6 de 6 registro(s)')).toBeVisible()
+  await expect(page.locator('tbody tr')).toHaveCount(6)
+})

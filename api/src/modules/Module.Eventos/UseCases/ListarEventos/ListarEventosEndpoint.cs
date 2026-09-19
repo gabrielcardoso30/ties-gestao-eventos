@@ -25,6 +25,7 @@ internal sealed class ListarEventosEndpoint : IEndpoint
                 | `eventoFormato` | `Presencial`, `Remoto` ou `Hibrido` |
                 | `dataInicioDe`, `dataInicioAte` | Intervalo (ISO-8601) aplicado sobre `eventoDataInicio` |
                 | `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |
+                | `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |
 
                 Cada item traz `inscricoesConfirmadas`. **Perfil exigido:** qualquer usuário autenticado.
                 """)

@@ -23,6 +23,7 @@ internal sealed class ListarPessoasEndpoint : IEndpoint
                 | `busca` | Texto contido no nome, no e-mail ou na empresa (case-insensitive, até 100 caracteres) |
                 | `estaAtivo` | `true`/`false` |
                 | `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |
+                | `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |
 
                 Pessoas excluídas nunca são retornadas. **Perfil exigido:** qualquer usuário autenticado.
                 """)

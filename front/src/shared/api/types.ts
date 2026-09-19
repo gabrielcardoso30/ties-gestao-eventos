@@ -20,6 +20,8 @@ export interface PagedResult<T> {
 export interface PagedRequest {
   pagina?: number
   tamanhoPagina?: number
+  ordenarPor?: string
+  direcao?: 'Asc' | 'Desc'
 }
 
 /** ProblemDetails (RFC 9457) conforme emitido pela API, com extensões `codigo` e `traceId`. */

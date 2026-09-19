@@ -10,5 +10,6 @@ internal sealed class ListarUsuariosValidator : AbstractValidator<ListarUsuarios
         RuleFor(r => r.Pagina).GreaterThanOrEqualTo(1);
         RuleFor(r => r.TamanhoPagina).InclusiveBetween(1, PagedRequest.TamanhoMaximo);
         RuleFor(r => r.Busca).MaximumLength(100);
+        RuleFor(r => r.OrdenarPor).Must(c => new[] { "usuarioNome", "usuarioEmail", "estaAtivo", "ultimoAcessoEm" }.Contains(c!, StringComparer.OrdinalIgnoreCase)).When(r => !string.IsNullOrWhiteSpace(r.OrdenarPor));
     }
 }

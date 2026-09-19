@@ -23,6 +23,7 @@ internal sealed class ListarPalestrasEndpoint : IEndpoint
                 | `eventoId` | Somente palestras do evento |
                 | `busca` | Texto contido no título (case-insensitive) |
                 | `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |
+                | `ordenarPor`, `direcao` | Campo permitido e direção `Asc`/`Desc` |
                 """)
             .WithValidation<ListarPalestrasRequest>()
             .Produces<PagedResult<ListarPalestrasItemResponse>>();
