@@ -65,7 +65,7 @@ services:
     depends_on:
       - api
     ports:
-      - "5173:80"
+      - "${FRONT_PORT:-5173}:80"
 
 volumes:
   postgres-data:

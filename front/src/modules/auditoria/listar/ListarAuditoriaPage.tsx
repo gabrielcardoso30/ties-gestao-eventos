@@ -1,0 +1,3 @@
+import type { ListarRegistrosAuditoriaItemResponse } from '@/shared/api/types'
+import { ResourceListPage } from '@/shared/components/generic/ResourceListPage'
+export function ListarAuditoriaPage() { return <ResourceListPage<ListarRegistrosAuditoriaItemResponse> modulo="Auditoria" titulo="Auditoria" descricao="Trilha imutável de todas as alterações da aplicação." endpoint="/auditoria/registros" queryKey="auditoria" columns={[{ titulo: 'Módulo', render: x => <strong>{x.modulo}</strong> }, { titulo: 'Entidade', render: x => x.entidadeNome }, { titulo: 'Operação', render: x => x.operacao }, { titulo: 'Usuário', render: x => x.usuarioNome || 'sistema' }, { titulo: 'Ocorrido em', render: x => new Date(x.ocorridoEm).toLocaleString('pt-BR') }]} /> }

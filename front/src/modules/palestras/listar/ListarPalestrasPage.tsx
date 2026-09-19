@@ -1,0 +1,3 @@
+import type { ListarPalestrasItemResponse } from '@/shared/api/types'
+import { ResourceListPage } from '@/shared/components/generic/ResourceListPage'
+export function ListarPalestrasPage() { return <ResourceListPage<ListarPalestrasItemResponse> modulo="Palestras" titulo="Palestras" descricao="Agenda, palestrantes, conteúdos e presenças." endpoint="/palestras" queryKey="palestras" columns={[{ titulo: 'Palestra', render: x => <strong>{x.palestraTitulo}</strong> }, { titulo: 'Início', render: x => new Date(x.palestraInicio).toLocaleString('pt-BR') }, { titulo: 'Palestrantes', render: x => x.palestrantesQuantidade }, { titulo: 'Presenças', render: x => x.presencasQuantidade }]} /> }

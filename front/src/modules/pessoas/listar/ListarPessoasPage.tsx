@@ -1,0 +1,3 @@
+import type { ListarPessoasItemResponse } from '@/shared/api/types'
+import { ResourceListPage } from '@/shared/components/generic/ResourceListPage'
+export function ListarPessoasPage() { return <ResourceListPage<ListarPessoasItemResponse> modulo="Pessoas" titulo="Pessoas" descricao="Cadastro único de palestrantes e participantes." endpoint="/pessoas" queryKey="pessoas" columns={[{ titulo: 'Nome', render: x => <strong>{x.pessoaNome}</strong> }, { titulo: 'E-mail', render: x => x.pessoaEmail }, { titulo: 'Empresa', render: x => x.pessoaEmpresa || '—' }, { titulo: 'Situação', render: x => x.estaAtivo ? 'Ativo' : 'Inativo' }]} /> }

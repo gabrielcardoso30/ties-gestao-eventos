@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Http.Results;
 
@@ -18,6 +19,8 @@ public sealed class ValidationFilter<TRequest> : IEndpointFilter where TRequest 
             return await next(context);
         }
 
+        PreencherIdentificadoresDaRota(request, context.HttpContext.Request.RouteValues);
+
         var resultado = await validator.ValidateAsync(request, context.HttpContext.RequestAborted);
         if (resultado.IsValid)
         {
@@ -32,6 +35,35 @@ public sealed class ValidationFilter<TRequest> : IEndpointFilter where TRequest 
             title: "Requisição inválida",
             type: ResultHttpExtensions.ProblemTypeBase + "Validacao",
             extensions: new Dictionary<string, object?> { ["codigo"] = "Validacao" });
+    }
+
+    /// <summary>
+    /// O filtro roda antes do delegate do endpoint. Portanto, propriedades técnicas como <c>PalestraId</c>,
+    /// marcadas com JsonIgnore e preenchidas pelo parâmetro de rota, precisam ser materializadas antes da validação.
+    /// A rota <c>{id}</c> representa o primeiro identificador vazio; rotas nomeadas, como <c>{salaId}</c>,
+    /// são associadas pelo nome da propriedade.
+    /// </summary>
+    private static void PreencherIdentificadoresDaRota(TRequest request, RouteValueDictionary routeValues)
+    {
+        var propriedades = typeof(TRequest).GetProperties()
+            .Where(p => p.CanWrite && p.PropertyType == typeof(Guid) && p.Name.EndsWith("Id", StringComparison.Ordinal))
+            .ToList();
+
+        foreach (var (chave, valor) in routeValues)
+        {
+            if (!Guid.TryParse(Convert.ToString(valor, System.Globalization.CultureInfo.InvariantCulture), out var id))
+            {
+                continue;
+            }
+
+            var propriedade = propriedades.FirstOrDefault(p => string.Equals(p.Name, chave, StringComparison.OrdinalIgnoreCase));
+            if (propriedade is null && string.Equals(chave, "id", StringComparison.OrdinalIgnoreCase))
+            {
+                propriedade = propriedades.FirstOrDefault(p => (Guid)(p.GetValue(request) ?? Guid.Empty) == Guid.Empty);
+            }
+
+            propriedade?.SetValue(request, id);
+        }
     }
 }
 

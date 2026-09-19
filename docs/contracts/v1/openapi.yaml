@@ -7,8 +7,980 @@ info:
     url: https://globalsys.com.br
   version: v1
 servers:
-  - url: http://localhost:5080/
+  - url: http://localhost:8080/
 paths:
+  '/api/v1/auditoria/registros/{id}':
+    get:
+      tags:
+        - Auditoria
+      summary: Obtém o detalhe de um registro de auditoria
+      description: "Retorna o registro completo, incluindo `dadosAnteriores` e `dadosNovos` como **strings JSON**:\n\n- `Inclusao`: `dadosAnteriores` nulo; `dadosNovos` com todas as propriedades da entidade.\n- `Alteracao`/`Exclusao`: apenas as propriedades modificadas, antes e depois.\n\n`traceId` permite correlacionar com logs e traces da requisição original. **Erros:** `404 Auditoria.RegistroNaoEncontrado`. **Perfil exigido:** Administrador."
+      operationId: ObterRegistroAuditoria
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObterRegistroAuditoriaResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  /api/v1/auditoria/registros:
+    get:
+      tags:
+        - Auditoria
+      summary: Lista registros de auditoria (paginado)
+      description: "Consulta a trilha de auditoria, do mais recente para o mais antigo (`ocorridoEm` desc). Filtros opcionais, combinados com AND:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `modulo` | Módulo de origem (ex.: `Locais`, `Pessoas`) |\n| `entidadeNome` | Nome da entidade (ex.: `Local`, `Sala`, `Pessoa`) |\n| `entidadeId` | Identificador da entidade (texto; normalmente um Guid) |\n| `usuarioId` | Guid do usuário que fez a alteração |\n| `operacao` | `Inclusao`, `Alteracao` ou `Exclusao` |\n| `ocorridoDe`, `ocorridoAte` | Intervalo (ISO-8601, inclusivo) do momento da alteração |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n\nA listagem não traz os dados antes/depois; use `GET /api/v1/auditoria/registros/{id}` para o detalhe.\n**Perfil exigido:** Administrador."
+      operationId: ListarRegistrosAuditoria
+      parameters:
+        - name: Modulo
+          in: query
+          schema:
+            type: string
+        - name: EntidadeNome
+          in: query
+          schema:
+            type: string
+        - name: EntidadeId
+          in: query
+          schema:
+            type: string
+        - name: UsuarioId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: Operacao
+          in: query
+          schema:
+            type: string
+        - name: OcorridoDe
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: OcorridoAte
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: Pagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 1
+        - name: TamanhoPagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 20
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResultOfListarRegistrosAuditoriaItemResponse'
+      security:
+        - Bearer: [ ]
+  '/api/v1/eventos/{id}':
+    get:
+      tags:
+        - Eventos
+      summary: Obtém um evento
+      description: "Retorna os dados do evento, a quantidade de inscrições confirmadas e, quando há local, o `localNome` (obtido do módulo Locais).\n\n**Perfil exigido:** qualquer usuário autenticado."
+      operationId: ObterEvento
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObterEventoResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    delete:
+      tags:
+        - Eventos
+      summary: Exclui (logicamente) um evento
+      description: "Soft delete do evento e de suas inscrições: registros permanecem no banco com `ExcluidoEm`/`ExcluidoPor` preenchidos.\n\nPermitido somente em `Rascunho` ou `Cancelado` (`422 Eventos.EventoNaoPodeSerExcluido`). **Perfil exigido:** Administrador ou Organizador."
+      operationId: ExcluirEvento
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    put:
+      tags:
+        - Eventos
+      summary: Atualiza os dados de um evento
+      description: "Atualiza nome, descrição, período, formato, local/link e capacidade. A situação é alterada apenas em `PATCH /{id}/situacao`.\n\n- Permitido somente em `Rascunho` ou `Publicado` (`422 Eventos.EventoNaoPodeSerAlterado`).\n- Mesmas regras de consistência de formato da criação; `localId` precisa existir (`422 Eventos.LocalNaoEncontrado`).\n\n**Perfil exigido:** Administrador ou Organizador."
+      operationId: AtualizarEvento
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarEventoRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AtualizarEventoResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/eventos/{id}/inscricoes':
+    get:
+      tags:
+        - Eventos
+      summary: Lista as inscrições de um evento (paginado)
+      description: "Lista inscrições ordenadas pela data de realização, com nome e e-mail obtidos do módulo Pessoas em lote.\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `inscricaoSituacao` | `Confirmada` ou `Cancelada` (omitido: todas) |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n\n**Perfil exigido:** qualquer usuário autenticado."
+      operationId: ListarInscricoes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: InscricaoSituacao
+          in: query
+          schema:
+            $ref: '#/components/schemas/InscricaoSituacao'
+        - name: Pagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 1
+        - name: TamanhoPagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 20
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResultOfListarInscricoesItemResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    post:
+      tags:
+        - Eventos
+      summary: Inscreve uma pessoa em um evento
+      description: "Cria uma inscrição **Confirmada** e emite `InscricaoRealizada`.\n\n| Regra | Erro |\n|-------|------|\n| Evento deve estar `Publicado` ou `EmAndamento` | `422 Eventos.EventoNaoAceitaInscricoes` |\n| Pessoa deve existir no módulo Pessoas | `422 Eventos.PessoaNaoEncontrada` |\n| Pessoa sem inscrição confirmada prévia no evento | `409 Eventos.PessoaJaInscrita` |\n| Capacidade (`eventoCapacidadeMaxima` ou, se nula e há local, a capacidade total do local) não atingida | `422 Eventos.CapacidadeEsgotada` |\n\n**Perfil exigido:** qualquer usuário autenticado."
+      operationId: InscreverParticipante
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InscreverParticipanteRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InscreverParticipanteResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  /api/v1/eventos:
+    get:
+      tags:
+        - Eventos
+      summary: Lista eventos (paginado)
+      description: "Lista eventos ordenados por data de início (mais recentes primeiro), com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome ou na descrição (case-insensitive) |\n| `eventoSituacao` | `Rascunho`, `Publicado`, `EmAndamento`, `Encerrado` ou `Cancelado` |\n| `eventoFormato` | `Presencial`, `Remoto` ou `Hibrido` |\n| `dataInicioDe`, `dataInicioAte` | Intervalo (ISO-8601) aplicado sobre `eventoDataInicio` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n\nCada item traz `inscricoesConfirmadas`. **Perfil exigido:** qualquer usuário autenticado."
+      operationId: ListarEventos
+      parameters:
+        - name: Busca
+          in: query
+          schema:
+            type: string
+        - name: EventoSituacao
+          in: query
+          schema:
+            $ref: '#/components/schemas/EventoSituacao'
+        - name: EventoFormato
+          in: query
+          schema:
+            $ref: '#/components/schemas/EventoFormato'
+        - name: DataInicioDe
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: DataInicioAte
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: Pagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 1
+        - name: TamanhoPagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 20
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResultOfListarEventosItemResponse'
+      security:
+        - Bearer: [ ]
+    post:
+      tags:
+        - Eventos
+      summary: Cria um evento (em rascunho)
+      description: "Cria um evento na situação **Rascunho**. Publique-o depois em `PATCH /api/v1/eventos/{id}/situacao`.\n\n| Formato | `localId` | `eventoLinkRemoto` |\n|---------|-----------|--------------------|\n| `Presencial` | obrigatório | — |\n| `Remoto` | não permitido | obrigatório |\n| `Hibrido` | obrigatório | obrigatório |\n\n- `eventoDataFim` deve ser posterior a `eventoDataInicio`.\n- `localId`, quando informado, precisa existir no módulo Locais (`422 Eventos.LocalNaoEncontrado`).\n- `eventoCapacidadeMaxima` é opcional; se omitida em evento com local, vale a capacidade total do local nas inscrições.\n\n**Perfil exigido:** Administrador ou Organizador."
+      operationId: CriarEvento
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarEventoRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CriarEventoResponse'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/eventos/{id}/inscricoes/{inscricaoId}':
+    delete:
+      tags:
+        - Eventos
+      summary: Cancela uma inscrição
+      description: "Muda a situação da inscrição para **Cancelada** (não é exclusão lógica) e emite `InscricaoCancelada`.\n\n- Inscrição inexistente no evento: `404 Eventos.InscricaoNaoEncontrada`.\n- Inscrição já cancelada: `422 Eventos.InscricaoJaCancelada`.\n\n**Perfil exigido:** qualquer usuário autenticado."
+      operationId: CancelarInscricao
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: inscricaoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/eventos/{id}/situacao':
+    patch:
+      tags:
+        - Eventos
+      summary: 'Altera a situação do evento (publicar, iniciar, encerrar, cancelar)'
+      description: "Aplica uma transição na máquina de estados do evento.\n\n| De | Para | Regra |\n|----|------|-------|\n| `Rascunho` | `Publicado` | Exige ao menos uma palestra cadastrada (`422 Eventos.EventoSemPalestras`). Emite `EventoPublicado`. |\n| `Publicado` | `EmAndamento` | — |\n| `Publicado`, `EmAndamento` | `Encerrado` | — |\n| `Rascunho`, `Publicado`, `EmAndamento` | `Cancelado` | `motivo` obrigatório (`422 Eventos.MotivoCancelamentoObrigatorio`). Emite `EventoCancelado`. |\n\nQualquer outra combinação (inclusive voltar para `Rascunho`) responde `422 Eventos.TransicaoSituacaoInvalida`.\n\n**Perfil exigido:** Administrador ou Organizador."
+      operationId: AlterarSituacaoEvento
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlterarSituacaoEventoRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlterarSituacaoEventoResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  /api/v1/identidade/usuarios:
+    post:
+      tags:
+        - Identidade
+      summary: Registra um usuário com seus perfis
+      description: "Cria um usuário (o e-mail é também o login) e o vincula aos perfis informados.\n\n- Perfis aceitos: `Administrador`, `Organizador`, `Participante` (`422 Identidade.PerfilInvalido` para qualquer outro).\n- Política de senha: mínimo 8 caracteres, com maiúscula, minúscula, dígito e símbolo (`422 Identidade.SenhaFraca`, com os motivos).\n- E-mail único (`409 Identidade.EmailJaCadastrado`).\n- Registra o evento `UsuarioRegistrado` no Outbox na mesma transação.\n\n**Perfil exigido:** Administrador."
+      operationId: RegistrarUsuario
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrarUsuarioRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrarUsuarioResponse'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    get:
+      tags:
+        - Identidade
+      summary: Lista usuários (paginado)
+      description: "Lista usuários ordenados por nome, com seus perfis e último acesso. Filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome ou no e-mail (case-insensitive) |\n| `estaAtivo` | `true`/`false` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n\n**Perfil exigido:** Administrador."
+      operationId: ListarUsuarios
+      parameters:
+        - name: Busca
+          in: query
+          schema:
+            type: string
+        - name: EstaAtivo
+          in: query
+          schema:
+            type: boolean
+        - name: Pagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 1
+        - name: TamanhoPagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 20
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResultOfListarUsuariosItemResponse'
+      security:
+        - Bearer: [ ]
+  /api/v1/identidade/usuarios/me:
+    get:
+      tags:
+        - Identidade
+      summary: Obtém o usuário autenticado (perfil próprio)
+      description: 'Retorna os dados do usuário dono do token (claim `sub`): nome, e-mail, perfis e último acesso. **Qualquer usuário autenticado.**'
+      operationId: ObterUsuarioAtual
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObterUsuarioAtualResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  /api/v1/identidade/sessoes:
+    post:
+      tags:
+        - Identidade
+      summary: Autentica um usuário e emite o token de acesso (login)
+      description: "Autentica por **e-mail e senha** e devolve um JWT Bearer (HS256) com as claims `sub`, `name`, `email`, `role` (uma por perfil) e `jti`.\nEnvie-o nas demais chamadas em `Authorization: Bearer {accessToken}`; `expiraEm` informa a validade.\n\n| Situação | Resposta |\n|----------|----------|\n| E-mail inexistente ou senha incorreta | `401 Identidade.CredenciaisInvalidas` |\n| 5 tentativas inválidas seguidas | `401 Identidade.UsuarioBloqueado` (bloqueio por 5 minutos) |\n| Usuário desativado | `401 Identidade.UsuarioInativo` |\n| Mais de 10 tentativas por minuto no mesmo IP | `429 Too Many Requests` |\n\nO login bem-sucedido atualiza `ultimoAcessoEm` e registra o evento `UsuarioAutenticado`. **Endpoint anônimo.**"
+      operationId: CriarSessao
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarSessaoRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CriarSessaoResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/api/v1/identidade/usuarios/{id}/perfis':
+    put:
+      tags:
+        - Identidade
+      summary: Substitui os perfis de um usuário
+      description: "Define o conjunto **completo** de perfis do usuário: perfis ausentes na lista são removidos e os novos, adicionados.\nPerfis aceitos: `Administrador`, `Organizador`, `Participante` (`422 Identidade.PerfilInvalido`). Tokens já emitidos mantêm os perfis antigos até expirarem.\n\n**Perfil exigido:** Administrador."
+      operationId: AtualizarPerfisUsuario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarPerfisUsuarioRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AtualizarPerfisUsuarioResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
   '/api/v1/locais/{id}':
     get:
       tags:
@@ -532,8 +1504,1096 @@ paths:
                 $ref: '#/components/schemas/ProblemDetails'
       security:
         - Bearer: [ ]
+  '/api/v1/palestras/certificados/{codigo}':
+    get:
+      tags:
+        - Palestras
+      summary: Valida publicamente um certificado pelo código
+      description: "Endpoint **público** (sem autenticação) para conferência de autenticidade de certificados.\n\nInforme o código de 12 caracteres impresso no certificado. Retorna título da palestra, evento, nome do participante,\ndata da palestra, data de emissão e carga horária. Código desconhecido: `404 Palestras.CertificadoNaoEncontrado`."
+      operationId: ValidarCertificado
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidarCertificadoResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/api/v1/palestras/{id}/palestrantes/{pessoaId}':
+    delete:
+      tags:
+        - Palestras
+      summary: Remove (logicamente) um palestrante da palestra
+      description: "Desvincula a pessoa da palestra (soft delete do vínculo).\n\n- Vínculo inexistente: `404 Palestras.PalestranteNaoEncontrado`.\n- Uma palestra precisa manter ao menos um palestrante: `422 Palestras.PalestraPrecisaDePalestrante`.\n\n**Perfil exigido:** Administrador ou Organizador."
+      operationId: RemoverPalestrante
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: pessoaId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/palestras/{id}/conteudos/{conteudoId}':
+    delete:
+      tags:
+        - Palestras
+      summary: Remove (logicamente) um conteúdo da palestra
+      description: 'Soft delete do conteúdo. Conteúdo inexistente na palestra: `404 Palestras.ConteudoNaoEncontrado`. **Perfil exigido:** Administrador ou Organizador.'
+      operationId: RemoverConteudo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: conteudoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/palestras/{id}/presencas':
+    post:
+      tags:
+        - Palestras
+      summary: Registra a presença de um participante na palestra
+      description: "Registra a presença de uma pessoa na palestra (check-in).\n\n- A pessoa precisa ter **inscrição confirmada** no evento da palestra (módulo Eventos): `422 Palestras.ParticipanteNaoInscrito`.\n- A presença é única por pessoa e palestra: `409 Palestras.PresencaJaRegistrada`.\n\nEmite o evento de integração `PresencaRegistrada`. **Perfil exigido:** Administrador ou Organizador."
+      operationId: RegistrarPresenca
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrarPresencaRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrarPresencaResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    get:
+      tags:
+        - Palestras
+      summary: Lista as presenças registradas na palestra
+      description: 'Retorna as presenças em ordem de registro, com o nome da pessoa (módulo Pessoas) e se o certificado já foi emitido (`certificadoEmitido`).'
+      operationId: ListarPresencas
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ListarPresencasItemResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/palestras/{id}':
+    get:
+      tags:
+        - Palestras
+      summary: Obtém uma palestra com palestrantes e conteúdos
+      description: "Retorna a palestra com carga horária calculada (`palestraFim - palestraInicio`, em minutos), palestrantes, conteúdos e\nquantidades de presenças e certificados.\n\nOs campos `eventoNome`, `salaNome` e `pessoaNome` são enriquecidos via contratos dos módulos Eventos, Locais e Pessoas."
+      operationId: ObterPalestra
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObterPalestraResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    delete:
+      tags:
+        - Palestras
+      summary: Exclui (logicamente) uma palestra
+      description: "Soft delete da palestra e, em cascata lógica, de seus **palestrantes** e **conteúdos** (`ExcluidoEm`/`ExcluidoPor` preenchidos).\n\n**Presenças e certificados permanecem**: certificados já emitidos continuam validáveis em `GET /api/v1/palestras/certificados/{codigo}`.\n\n**Perfil exigido:** Administrador ou Organizador."
+      operationId: ExcluirPalestra
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    put:
+      tags:
+        - Palestras
+      summary: Atualiza os dados de uma palestra
+      description: "Atualiza título, descrição, sala e horário. O evento da palestra não muda; palestrantes e conteúdos são gerenciados em `/palestrantes` e `/conteudos`.\n\nAs mesmas regras da criação são reaplicadas: evento ainda aceita palestras (`422 Palestras.EventoNaoAceitaPalestras`),\nperíodo dentro do evento (`422 Palestras.PeriodoForaDoEvento`), sala do local do evento (`422 Palestras.SalaNaoPertenceAoLocal`)\ne sem sobreposição com **outras** palestras na sala (`409 Palestras.SalaOcupada`).\n\n**Perfil exigido:** Administrador ou Organizador."
+      operationId: AtualizarPalestra
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarPalestraRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AtualizarPalestraResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  /api/v1/palestras:
+    get:
+      tags:
+        - Palestras
+      summary: Lista palestras (paginado)
+      description: "Lista palestras ordenadas por `palestraInicio`, com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `eventoId` | Somente palestras do evento |\n| `busca` | Texto contido no título (case-insensitive) |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |"
+      operationId: ListarPalestras
+      parameters:
+        - name: EventoId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: Busca
+          in: query
+          schema:
+            type: string
+        - name: Pagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 1
+        - name: TamanhoPagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 20
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResultOfListarPalestrasItemResponse'
+      security:
+        - Bearer: [ ]
+    post:
+      tags:
+        - Palestras
+      summary: Cria uma palestra em um evento
+      description: "Cria uma palestra vinculada a um evento, com ao menos um palestrante.\n\n**Regras validadas com outros módulos:**\n\n| Regra | Erro |\n|-------|------|\n| Evento existe | `422 Palestras.EventoNaoEncontrado` |\n| Evento não está `Encerrado`/`Cancelado` | `422 Palestras.EventoNaoAceitaPalestras` |\n| Período da palestra dentro do período do evento | `422 Palestras.PeriodoForaDoEvento` |\n| `salaId` (opcional) existe e está ativa | `422 Palestras.SalaNaoEncontrada` |\n| Sala pertence ao local do evento | `422 Palestras.SalaNaoPertenceAoLocal` |\n| Sem outra palestra na mesma sala no horário | `409 Palestras.SalaOcupada` |\n| Todas as pessoas informadas existem | `422 Palestras.PessoaNaoEncontrada` |\n| Pessoa não repetida entre os palestrantes | `409 Palestras.PalestranteJaVinculado` |\n\nPapéis de palestrante: `Principal`, `Coautor`, `Mediador`. Emite o evento de integração `PalestraCriada`.\n\n**Perfil exigido:** Administrador ou Organizador."
+      operationId: CriarPalestra
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarPalestraRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CriarPalestraResponse'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/palestras/{id}/certificados':
+    post:
+      tags:
+        - Palestras
+      summary: Emite o certificado de participação de uma pessoa
+      description: "Emite o certificado da pessoa na palestra e devolve o **código de validação** (12 caracteres, sem símbolos ambíguos).\n\n- Exige presença registrada: `422 Palestras.PresencaNaoRegistrada`.\n- Exige palestra encerrada (`palestraFim` já passou): `422 Palestras.PalestraNaoEncerrada`.\n- **Idempotente:** se o certificado já existir, responde `200` com o existente; caso contrário `201` e emite `CertificadoEmitido`.\n\nA carga horária registrada é a duração da palestra em minutos. Qualquer usuário autenticado pode solicitar."
+      operationId: EmitirCertificado
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmitirCertificadoRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmitirCertificadoResponse'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmitirCertificadoResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/palestras/{id}/palestrantes':
+    post:
+      tags:
+        - Palestras
+      summary: Vincula uma pessoa como palestrante
+      description: "Adiciona uma pessoa (módulo Pessoas) à palestra com o papel `Principal`, `Coautor` ou `Mediador`.\n\n- A pessoa precisa existir (`422 Palestras.PessoaNaoEncontrada`).\n- Uma pessoa só é vinculada uma vez por palestra (`409 Palestras.PalestranteJaVinculado`).\n\n**Perfil exigido:** Administrador ou Organizador."
+      operationId: AdicionarPalestrante
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdicionarPalestranteRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdicionarPalestranteResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/palestras/{id}/conteudos':
+    post:
+      tags:
+        - Palestras
+      summary: Adiciona um conteúdo (material) à palestra
+      description: "Registra um material da palestra apontando para uma URL absoluta (armazenamento externo).\n\nTipos de conteúdo: `Slides`, `Pdf`, `Arquivo`, `Link`, `Video`, `Imagem`.\n\n**Perfil exigido:** Administrador ou Organizador."
+      operationId: AdicionarConteudo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdicionarConteudoRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdicionarConteudoResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/pessoas/{id}':
+    get:
+      tags:
+        - Pessoas
+      summary: Obtém uma pessoa
+      description: Retorna os dados cadastrais completos da pessoa (CPF sem máscara). Pessoas excluídas retornam `404 Pessoas.PessoaNaoEncontrada`. **Perfil exigido:** qualquer usuário autenticado.
+      operationId: ObterPessoa
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObterPessoaResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    delete:
+      tags:
+        - Pessoas
+      summary: Exclui (logicamente) uma pessoa
+      description: "Soft delete: o registro permanece no banco com `ExcluidoEm`/`ExcluidoPor` preenchidos e deixa de ser retornado.\nO e-mail e o CPF ficam liberados para um novo cadastro. Publica o evento de integração `PessoaExcluida`.\n\n**Erros:** `404 Pessoas.PessoaNaoEncontrada`. **Perfil exigido:** Administrador ou Organizador."
+      operationId: ExcluirPessoa
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    put:
+      tags:
+        - Pessoas
+      summary: Atualiza os dados de uma pessoa
+      description: "Substitui todos os dados da pessoa (PUT), inclusive `estaAtivo` (pessoas inativas não são retornadas via `IPessoasModuleApi`).\n\nAs mesmas regras do cadastro se aplicam: e-mail normalizado em minúsculas e CPF só com dígitos, ambos únicos entre pessoas ativas.\n\n**Erros:** `400 Validacao` · `404 Pessoas.PessoaNaoEncontrada` · `409 Pessoas.EmailJaCadastrado` · `409 Pessoas.DocumentoJaCadastrado`.\n\n**Perfil exigido:** Administrador ou Organizador."
+      operationId: AtualizarPessoa
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarPessoaRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AtualizarPessoaResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  /api/v1/pessoas:
+    get:
+      tags:
+        - Pessoas
+      summary: Lista pessoas (paginado)
+      description: "Lista pessoas ordenadas por nome, com filtros opcionais:\n\n| Parâmetro | Descrição |\n|-----------|-----------|\n| `busca` | Texto contido no nome, no e-mail ou na empresa (case-insensitive, até 100 caracteres) |\n| `estaAtivo` | `true`/`false` |\n| `pagina`, `tamanhoPagina` | Paginação (máx. 100 por página) |\n\nPessoas excluídas nunca são retornadas. **Perfil exigido:** qualquer usuário autenticado."
+      operationId: ListarPessoas
+      parameters:
+        - name: Busca
+          in: query
+          schema:
+            type: string
+        - name: EstaAtivo
+          in: query
+          schema:
+            type: boolean
+        - name: Pagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 1
+        - name: TamanhoPagina
+          in: query
+          schema:
+            pattern: '^-?(?:0|[1-9]\d*)$'
+            type:
+              - integer
+              - string
+            format: int32
+            default: 20
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResultOfListarPessoasItemResponse'
+      security:
+        - Bearer: [ ]
+    post:
+      tags:
+        - Pessoas
+      summary: Cadastra uma pessoa
+      description: "Cadastra uma pessoa (palestrante ou participante; o papel nasce do relacionamento com eventos e palestras).\n\n| Campo | Regra |\n|-------|-------|\n| `pessoaNome` | Obrigatório, até 150 caracteres |\n| `pessoaEmail` | Obrigatório, e-mail válido; armazenado em minúsculas; único entre pessoas ativas |\n| `pessoaDocumento` | Opcional; CPF com ou sem máscara, validado pelos dígitos verificadores; armazenado só com dígitos; único entre pessoas ativas |\n| `pessoaTelefone`, `pessoaEmpresa`, `pessoaCargo` | Opcionais (20/150/100 caracteres) |\n| `pessoaMiniBio` | Opcional, até 2000 caracteres |\n| `pessoaFotoUrl` | Opcional, URL absoluta http(s), até 500 caracteres |\n\n**Erros:** `400 Validacao` · `409 Pessoas.EmailJaCadastrado` · `409 Pessoas.DocumentoJaCadastrado`.\n\nPublica o evento de integração `PessoaCriada`. **Perfil exigido:** Administrador ou Organizador."
+      operationId: CriarPessoa
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarPessoaRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CriarPessoaResponse'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
 components:
   schemas:
+    AdicionarConteudoRequest:
+      required:
+        - conteudoTitulo
+        - conteudoTipo
+        - conteudoUrl
+        - conteudoDescricao
+      type: object
+      properties:
+        conteudoTitulo:
+          type: string
+        conteudoTipo:
+          $ref: '#/components/schemas/ConteudoTipo'
+        conteudoUrl:
+          type: string
+        conteudoDescricao:
+          type:
+            - 'null'
+            - string
+    AdicionarConteudoResponse:
+      required:
+        - id
+        - palestraId
+        - conteudoTitulo
+        - conteudoTipo
+        - conteudoUrl
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        palestraId:
+          type: string
+          format: uuid
+        conteudoTitulo:
+          type: string
+        conteudoTipo:
+          $ref: '#/components/schemas/ConteudoTipo'
+        conteudoUrl:
+          type: string
+    AdicionarPalestranteRequest:
+      required:
+        - pessoaId
+        - palestrantePapel
+      type: object
+      properties:
+        pessoaId:
+          type: string
+          format: uuid
+        palestrantePapel:
+          $ref: '#/components/schemas/PalestrantePapel'
+    AdicionarPalestranteResponse:
+      required:
+        - palestraId
+        - pessoaId
+        - palestrantePapel
+      type: object
+      properties:
+        palestraId:
+          type: string
+          format: uuid
+        pessoaId:
+          type: string
+          format: uuid
+        palestrantePapel:
+          $ref: '#/components/schemas/PalestrantePapel'
     AdicionarSalaRequest:
       required:
         - salaNome
@@ -581,6 +2641,91 @@ components:
           format: int32
         salaTipo:
           $ref: '#/components/schemas/SalaTipo'
+    AlterarSituacaoEventoRequest:
+      required:
+        - eventoSituacao
+        - motivo
+      type: object
+      properties:
+        eventoSituacao:
+          $ref: '#/components/schemas/EventoSituacao'
+        motivo:
+          type:
+            - 'null'
+            - string
+    AlterarSituacaoEventoResponse:
+      required:
+        - id
+        - eventoSituacao
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoSituacao:
+          $ref: '#/components/schemas/EventoSituacao'
+    AtualizarEventoRequest:
+      required:
+        - eventoNome
+        - eventoDescricao
+        - eventoDataInicio
+        - eventoDataFim
+        - eventoFormato
+        - localId
+        - eventoLinkRemoto
+        - eventoCapacidadeMaxima
+      type: object
+      properties:
+        eventoNome:
+          type: string
+        eventoDescricao:
+          type:
+            - 'null'
+            - string
+        eventoDataInicio:
+          type: string
+          format: date-time
+        eventoDataFim:
+          type: string
+          format: date-time
+        eventoFormato:
+          $ref: '#/components/schemas/EventoFormato'
+        localId:
+          type:
+            - 'null'
+            - string
+          format: uuid
+        eventoLinkRemoto:
+          type:
+            - 'null'
+            - string
+        eventoCapacidadeMaxima:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - 'null'
+            - integer
+            - string
+          format: int32
+    AtualizarEventoResponse:
+      required:
+        - id
+        - eventoNome
+        - eventoSituacao
+        - alteradoEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoNome:
+          type: string
+        eventoSituacao:
+          $ref: '#/components/schemas/EventoSituacao'
+        alteradoEm:
+          type:
+            - 'null'
+            - string
+          format: date-time
     AtualizarLocalRequest:
       required:
         - localNome
@@ -631,6 +2776,137 @@ components:
           format: uuid
         localNome:
           type: string
+        alteradoEm:
+          type:
+            - 'null'
+            - string
+          format: date-time
+    AtualizarPalestraRequest:
+      required:
+        - salaId
+        - palestraTitulo
+        - palestraDescricao
+        - palestraInicio
+        - palestraFim
+      type: object
+      properties:
+        salaId:
+          type:
+            - 'null'
+            - string
+          format: uuid
+        palestraTitulo:
+          type: string
+        palestraDescricao:
+          type:
+            - 'null'
+            - string
+        palestraInicio:
+          type: string
+          format: date-time
+        palestraFim:
+          type: string
+          format: date-time
+    AtualizarPalestraResponse:
+      required:
+        - id
+        - palestraTitulo
+        - alteradoEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        palestraTitulo:
+          type: string
+        alteradoEm:
+          type:
+            - 'null'
+            - string
+          format: date-time
+    AtualizarPerfisUsuarioRequest:
+      required:
+        - perfis
+      type: object
+      properties:
+        perfis:
+          type: array
+          items:
+            type: string
+    AtualizarPerfisUsuarioResponse:
+      required:
+        - id
+        - perfis
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        perfis:
+          type: array
+          items:
+            type: string
+    AtualizarPessoaRequest:
+      required:
+        - pessoaNome
+        - pessoaEmail
+        - pessoaTelefone
+        - pessoaDocumento
+        - pessoaEmpresa
+        - pessoaCargo
+        - pessoaMiniBio
+        - pessoaFotoUrl
+      type: object
+      properties:
+        pessoaNome:
+          type: string
+        pessoaEmail:
+          type: string
+        pessoaTelefone:
+          type:
+            - 'null'
+            - string
+        pessoaDocumento:
+          type:
+            - 'null'
+            - string
+        pessoaEmpresa:
+          type:
+            - 'null'
+            - string
+        pessoaCargo:
+          type:
+            - 'null'
+            - string
+        pessoaMiniBio:
+          type:
+            - 'null'
+            - string
+        pessoaFotoUrl:
+          type:
+            - 'null'
+            - string
+        estaAtivo:
+          type: boolean
+          default: true
+    AtualizarPessoaResponse:
+      required:
+        - id
+        - pessoaNome
+        - pessoaEmail
+        - estaAtivo
+        - alteradoEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pessoaNome:
+          type: string
+        pessoaEmail:
+          type: string
+        estaAtivo:
+          type: boolean
         alteradoEm:
           type:
             - 'null'
@@ -689,6 +2965,70 @@ components:
           $ref: '#/components/schemas/SalaTipo'
         estaAtivo:
           type: boolean
+    ConteudoTipo:
+      enum:
+        - Slides
+        - Pdf
+        - Arquivo
+        - Link
+        - Video
+        - Imagem
+    CriarEventoRequest:
+      required:
+        - eventoNome
+        - eventoDescricao
+        - eventoDataInicio
+        - eventoDataFim
+        - eventoFormato
+        - localId
+        - eventoLinkRemoto
+        - eventoCapacidadeMaxima
+      type: object
+      properties:
+        eventoNome:
+          type: string
+        eventoDescricao:
+          type:
+            - 'null'
+            - string
+        eventoDataInicio:
+          type: string
+          format: date-time
+        eventoDataFim:
+          type: string
+          format: date-time
+        eventoFormato:
+          $ref: '#/components/schemas/EventoFormato'
+        localId:
+          type:
+            - 'null'
+            - string
+          format: uuid
+        eventoLinkRemoto:
+          type:
+            - 'null'
+            - string
+        eventoCapacidadeMaxima:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - 'null'
+            - integer
+            - string
+          format: int32
+    CriarEventoResponse:
+      required:
+        - id
+        - eventoNome
+        - eventoSituacao
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoNome:
+          type: string
+        eventoSituacao:
+          $ref: '#/components/schemas/EventoSituacao'
     CriarLocalRequest:
       required:
         - localNome
@@ -753,6 +3093,220 @@ components:
             - integer
             - string
           format: int32
+    CriarPalestraPalestranteRequest:
+      required:
+        - pessoaId
+        - palestrantePapel
+      type: object
+      properties:
+        pessoaId:
+          type: string
+          format: uuid
+        palestrantePapel:
+          $ref: '#/components/schemas/PalestrantePapel'
+    CriarPalestraRequest:
+      required:
+        - eventoId
+        - salaId
+        - palestraTitulo
+        - palestraDescricao
+        - palestraInicio
+        - palestraFim
+        - palestrantes
+      type: object
+      properties:
+        eventoId:
+          type: string
+          format: uuid
+        salaId:
+          type:
+            - 'null'
+            - string
+          format: uuid
+        palestraTitulo:
+          type: string
+        palestraDescricao:
+          type:
+            - 'null'
+            - string
+        palestraInicio:
+          type: string
+          format: date-time
+        palestraFim:
+          type: string
+          format: date-time
+        palestrantes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriarPalestraPalestranteRequest'
+    CriarPalestraResponse:
+      required:
+        - id
+        - eventoId
+        - palestraTitulo
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoId:
+          type: string
+          format: uuid
+        palestraTitulo:
+          type: string
+    CriarPessoaRequest:
+      required:
+        - pessoaNome
+        - pessoaEmail
+        - pessoaTelefone
+        - pessoaDocumento
+        - pessoaEmpresa
+        - pessoaCargo
+        - pessoaMiniBio
+        - pessoaFotoUrl
+      type: object
+      properties:
+        pessoaNome:
+          type: string
+        pessoaEmail:
+          type: string
+        pessoaTelefone:
+          type:
+            - 'null'
+            - string
+        pessoaDocumento:
+          type:
+            - 'null'
+            - string
+        pessoaEmpresa:
+          type:
+            - 'null'
+            - string
+        pessoaCargo:
+          type:
+            - 'null'
+            - string
+        pessoaMiniBio:
+          type:
+            - 'null'
+            - string
+        pessoaFotoUrl:
+          type:
+            - 'null'
+            - string
+    CriarPessoaResponse:
+      required:
+        - id
+        - pessoaNome
+        - pessoaEmail
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pessoaNome:
+          type: string
+        pessoaEmail:
+          type: string
+    CriarSessaoRequest:
+      required:
+        - usuarioEmail
+        - senha
+      type: object
+      properties:
+        usuarioEmail:
+          type: string
+        senha:
+          type: string
+    CriarSessaoResponse:
+      required:
+        - accessToken
+        - expiraEm
+        - usuario
+      type: object
+      properties:
+        accessToken:
+          type: string
+        expiraEm:
+          type: string
+          format: date-time
+        usuario:
+          $ref: '#/components/schemas/CriarSessaoUsuarioResponse'
+    CriarSessaoUsuarioResponse:
+      required:
+        - id
+        - usuarioNome
+        - usuarioEmail
+        - perfis
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        usuarioNome:
+          type: string
+        usuarioEmail:
+          type: string
+        perfis:
+          type: array
+          items:
+            type: string
+    EmitirCertificadoRequest:
+      required:
+        - pessoaId
+      type: object
+      properties:
+        pessoaId:
+          type: string
+          format: uuid
+    EmitirCertificadoResponse:
+      required:
+        - id
+        - certificadoCodigo
+        - palestraId
+        - palestraTitulo
+        - pessoaId
+        - pessoaNome
+        - certificadoEmitidoEm
+        - certificadoCargaHorariaMinutos
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        certificadoCodigo:
+          type: string
+        palestraId:
+          type: string
+          format: uuid
+        palestraTitulo:
+          type: string
+        pessoaId:
+          type: string
+          format: uuid
+        pessoaNome:
+          type: string
+        certificadoEmitidoEm:
+          type: string
+          format: date-time
+        certificadoCargaHorariaMinutos:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+    EventoFormato:
+      enum:
+        - Presencial
+        - Remoto
+        - Hibrido
+    EventoSituacao:
+      enum:
+        - Rascunho
+        - Publicado
+        - EmAndamento
+        - Encerrado
+        - Cancelado
     HttpValidationProblemDetails:
       type: object
       properties:
@@ -785,6 +3339,104 @@ components:
             type: array
             items:
               type: string
+    InscreverParticipanteRequest:
+      required:
+        - pessoaId
+      type: object
+      properties:
+        pessoaId:
+          type: string
+          format: uuid
+    InscreverParticipanteResponse:
+      required:
+        - id
+        - eventoId
+        - pessoaId
+        - inscricaoSituacao
+        - inscricaoRealizadaEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoId:
+          type: string
+          format: uuid
+        pessoaId:
+          type: string
+          format: uuid
+        inscricaoSituacao:
+          $ref: '#/components/schemas/InscricaoSituacao'
+        inscricaoRealizadaEm:
+          type: string
+          format: date-time
+    InscricaoSituacao:
+      enum:
+        - Confirmada
+        - Cancelada
+    ListarEventosItemResponse:
+      required:
+        - id
+        - eventoNome
+        - eventoDataInicio
+        - eventoDataFim
+        - eventoFormato
+        - eventoSituacao
+        - localId
+        - inscricoesConfirmadas
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoNome:
+          type: string
+        eventoDataInicio:
+          type: string
+          format: date-time
+        eventoDataFim:
+          type: string
+          format: date-time
+        eventoFormato:
+          $ref: '#/components/schemas/EventoFormato'
+        eventoSituacao:
+          $ref: '#/components/schemas/EventoSituacao'
+        localId:
+          type:
+            - 'null'
+            - string
+          format: uuid
+        inscricoesConfirmadas:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+    ListarInscricoesItemResponse:
+      required:
+        - id
+        - pessoaId
+        - pessoaNome
+        - pessoaEmail
+        - inscricaoSituacao
+        - inscricaoRealizadaEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pessoaId:
+          type: string
+          format: uuid
+        pessoaNome:
+          type: string
+        pessoaEmail:
+          type: string
+        inscricaoSituacao:
+          $ref: '#/components/schemas/InscricaoSituacao'
+        inscricaoRealizadaEm:
+          type: string
+          format: date-time
     ListarLocaisItemResponse:
       required:
         - id
@@ -819,6 +3471,132 @@ components:
           format: int32
         estaAtivo:
           type: boolean
+    ListarPalestrasItemResponse:
+      required:
+        - id
+        - eventoId
+        - salaId
+        - palestraTitulo
+        - palestraInicio
+        - palestraFim
+        - palestrantesQuantidade
+        - presencasQuantidade
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoId:
+          type: string
+          format: uuid
+        salaId:
+          type:
+            - 'null'
+            - string
+          format: uuid
+        palestraTitulo:
+          type: string
+        palestraInicio:
+          type: string
+          format: date-time
+        palestraFim:
+          type: string
+          format: date-time
+        palestrantesQuantidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        presencasQuantidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+    ListarPessoasItemResponse:
+      required:
+        - id
+        - pessoaNome
+        - pessoaEmail
+        - pessoaEmpresa
+        - pessoaCargo
+        - estaAtivo
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pessoaNome:
+          type: string
+        pessoaEmail:
+          type: string
+        pessoaEmpresa:
+          type:
+            - 'null'
+            - string
+        pessoaCargo:
+          type:
+            - 'null'
+            - string
+        estaAtivo:
+          type: boolean
+    ListarPresencasItemResponse:
+      required:
+        - id
+        - pessoaId
+        - pessoaNome
+        - presencaRegistradaEm
+        - certificadoEmitido
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pessoaId:
+          type: string
+          format: uuid
+        pessoaNome:
+          type: string
+        presencaRegistradaEm:
+          type: string
+          format: date-time
+        certificadoEmitido:
+          type: boolean
+    ListarRegistrosAuditoriaItemResponse:
+      required:
+        - id
+        - modulo
+        - entidadeNome
+        - entidadeId
+        - operacao
+        - usuarioNome
+        - traceId
+        - ocorridoEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        modulo:
+          type: string
+        entidadeNome:
+          type: string
+        entidadeId:
+          type: string
+        operacao:
+          type: string
+        usuarioNome:
+          type:
+            - 'null'
+            - string
+        traceId:
+          type:
+            - 'null'
+            - string
+        ocorridoEm:
+          type: string
+          format: date-time
     ListarSalasItemResponse:
       required:
         - id
@@ -848,6 +3626,110 @@ components:
             - string
         estaAtivo:
           type: boolean
+    ListarUsuariosItemResponse:
+      required:
+        - id
+        - usuarioNome
+        - usuarioEmail
+        - perfis
+        - estaAtivo
+        - ultimoAcessoEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        usuarioNome:
+          type: string
+        usuarioEmail:
+          type: string
+        perfis:
+          type: array
+          items:
+            type: string
+        estaAtivo:
+          type: boolean
+        ultimoAcessoEm:
+          type:
+            - 'null'
+            - string
+          format: date-time
+    ObterEventoResponse:
+      required:
+        - id
+        - eventoNome
+        - eventoDescricao
+        - eventoDataInicio
+        - eventoDataFim
+        - eventoFormato
+        - eventoSituacao
+        - localId
+        - localNome
+        - eventoLinkRemoto
+        - eventoCapacidadeMaxima
+        - inscricoesConfirmadas
+        - eventoCancelamentoMotivo
+        - criadoEm
+        - alteradoEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoNome:
+          type: string
+        eventoDescricao:
+          type:
+            - 'null'
+            - string
+        eventoDataInicio:
+          type: string
+          format: date-time
+        eventoDataFim:
+          type: string
+          format: date-time
+        eventoFormato:
+          $ref: '#/components/schemas/EventoFormato'
+        eventoSituacao:
+          $ref: '#/components/schemas/EventoSituacao'
+        localId:
+          type:
+            - 'null'
+            - string
+          format: uuid
+        localNome:
+          type:
+            - 'null'
+            - string
+        eventoLinkRemoto:
+          type:
+            - 'null'
+            - string
+        eventoCapacidadeMaxima:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - 'null'
+            - integer
+            - string
+          format: int32
+        inscricoesConfirmadas:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        eventoCancelamentoMotivo:
+          type:
+            - 'null'
+            - string
+        criadoEm:
+          type: string
+          format: date-time
+        alteradoEm:
+          type:
+            - 'null'
+            - string
+          format: date-time
     ObterLocalResponse:
       required:
         - id
@@ -944,6 +3826,335 @@ components:
             - string
         estaAtivo:
           type: boolean
+    ObterPalestraConteudoResponse:
+      required:
+        - id
+        - conteudoTitulo
+        - conteudoTipo
+        - conteudoUrl
+        - conteudoDescricao
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        conteudoTitulo:
+          type: string
+        conteudoTipo:
+          $ref: '#/components/schemas/ConteudoTipo'
+        conteudoUrl:
+          type: string
+        conteudoDescricao:
+          type:
+            - 'null'
+            - string
+    ObterPalestraPalestranteResponse:
+      required:
+        - pessoaId
+        - pessoaNome
+        - palestrantePapel
+      type: object
+      properties:
+        pessoaId:
+          type: string
+          format: uuid
+        pessoaNome:
+          type: string
+        palestrantePapel:
+          $ref: '#/components/schemas/PalestrantePapel'
+    ObterPalestraResponse:
+      required:
+        - id
+        - eventoId
+        - eventoNome
+        - salaId
+        - salaNome
+        - palestraTitulo
+        - palestraDescricao
+        - palestraInicio
+        - palestraFim
+        - palestraCargaHorariaMinutos
+        - palestrantes
+        - conteudos
+        - presencasQuantidade
+        - certificadosQuantidade
+        - criadoEm
+        - alteradoEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoId:
+          type: string
+          format: uuid
+        eventoNome:
+          type: string
+        salaId:
+          type:
+            - 'null'
+            - string
+          format: uuid
+        salaNome:
+          type:
+            - 'null'
+            - string
+        palestraTitulo:
+          type: string
+        palestraDescricao:
+          type:
+            - 'null'
+            - string
+        palestraInicio:
+          type: string
+          format: date-time
+        palestraFim:
+          type: string
+          format: date-time
+        palestraCargaHorariaMinutos:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        palestrantes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObterPalestraPalestranteResponse'
+        conteudos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObterPalestraConteudoResponse'
+        presencasQuantidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        certificadosQuantidade:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        criadoEm:
+          type: string
+          format: date-time
+        alteradoEm:
+          type:
+            - 'null'
+            - string
+          format: date-time
+    ObterPessoaResponse:
+      required:
+        - id
+        - pessoaNome
+        - pessoaEmail
+        - pessoaTelefone
+        - pessoaDocumento
+        - pessoaEmpresa
+        - pessoaCargo
+        - pessoaMiniBio
+        - pessoaFotoUrl
+        - estaAtivo
+        - criadoEm
+        - alteradoEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pessoaNome:
+          type: string
+        pessoaEmail:
+          type: string
+        pessoaTelefone:
+          type:
+            - 'null'
+            - string
+        pessoaDocumento:
+          type:
+            - 'null'
+            - string
+        pessoaEmpresa:
+          type:
+            - 'null'
+            - string
+        pessoaCargo:
+          type:
+            - 'null'
+            - string
+        pessoaMiniBio:
+          type:
+            - 'null'
+            - string
+        pessoaFotoUrl:
+          type:
+            - 'null'
+            - string
+        estaAtivo:
+          type: boolean
+        criadoEm:
+          type: string
+          format: date-time
+        alteradoEm:
+          type:
+            - 'null'
+            - string
+          format: date-time
+    ObterRegistroAuditoriaResponse:
+      required:
+        - id
+        - modulo
+        - entidadeNome
+        - entidadeId
+        - operacao
+        - dadosAnteriores
+        - dadosNovos
+        - usuarioId
+        - usuarioNome
+        - traceId
+        - ocorridoEm
+        - registradoEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        modulo:
+          type: string
+        entidadeNome:
+          type: string
+        entidadeId:
+          type: string
+        operacao:
+          type: string
+        dadosAnteriores:
+          type:
+            - 'null'
+            - string
+        dadosNovos:
+          type:
+            - 'null'
+            - string
+        usuarioId:
+          type:
+            - 'null'
+            - string
+          format: uuid
+        usuarioNome:
+          type:
+            - 'null'
+            - string
+        traceId:
+          type:
+            - 'null'
+            - string
+        ocorridoEm:
+          type: string
+          format: date-time
+        registradoEm:
+          type: string
+          format: date-time
+    ObterUsuarioAtualResponse:
+      required:
+        - id
+        - usuarioNome
+        - usuarioEmail
+        - perfis
+        - ultimoAcessoEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        usuarioNome:
+          type: string
+        usuarioEmail:
+          type: string
+        perfis:
+          type: array
+          items:
+            type: string
+        ultimoAcessoEm:
+          type:
+            - 'null'
+            - string
+          format: date-time
+    PagedResultOfListarEventosItemResponse:
+      required:
+        - itens
+        - pagina
+        - tamanhoPagina
+        - total
+      type: object
+      properties:
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListarEventosItemResponse'
+        pagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        tamanhoPagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        total:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int64
+        totalPaginas:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+      description: Resultado paginado padrão de todas as listagens da API.
+    PagedResultOfListarInscricoesItemResponse:
+      required:
+        - itens
+        - pagina
+        - tamanhoPagina
+        - total
+      type: object
+      properties:
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListarInscricoesItemResponse'
+        pagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        tamanhoPagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        total:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int64
+        totalPaginas:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+      description: Resultado paginado padrão de todas as listagens da API.
     PagedResultOfListarLocaisItemResponse:
       required:
         - itens
@@ -981,6 +4192,159 @@ components:
             - string
           format: int32
       description: Resultado paginado padrão de todas as listagens da API.
+    PagedResultOfListarPalestrasItemResponse:
+      required:
+        - itens
+        - pagina
+        - tamanhoPagina
+        - total
+      type: object
+      properties:
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListarPalestrasItemResponse'
+        pagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        tamanhoPagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        total:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int64
+        totalPaginas:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+      description: Resultado paginado padrão de todas as listagens da API.
+    PagedResultOfListarPessoasItemResponse:
+      required:
+        - itens
+        - pagina
+        - tamanhoPagina
+        - total
+      type: object
+      properties:
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListarPessoasItemResponse'
+        pagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        tamanhoPagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        total:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int64
+        totalPaginas:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+      description: Resultado paginado padrão de todas as listagens da API.
+    PagedResultOfListarRegistrosAuditoriaItemResponse:
+      required:
+        - itens
+        - pagina
+        - tamanhoPagina
+        - total
+      type: object
+      properties:
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListarRegistrosAuditoriaItemResponse'
+        pagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        tamanhoPagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        total:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int64
+        totalPaginas:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+      description: Resultado paginado padrão de todas as listagens da API.
+    PagedResultOfListarUsuariosItemResponse:
+      required:
+        - itens
+        - pagina
+        - tamanhoPagina
+        - total
+      type: object
+      properties:
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListarUsuariosItemResponse'
+        pagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        tamanhoPagina:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+        total:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int64
+        totalPaginas:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
+      description: Resultado paginado padrão de todas as listagens da API.
+    PalestrantePapel:
+      enum:
+        - Principal
+        - Coautor
+        - Mediador
     ProblemDetails:
       type: object
       properties:
@@ -1007,6 +4371,71 @@ components:
           type:
             - 'null'
             - string
+    RegistrarPresencaRequest:
+      required:
+        - pessoaId
+      type: object
+      properties:
+        pessoaId:
+          type: string
+          format: uuid
+    RegistrarPresencaResponse:
+      required:
+        - id
+        - palestraId
+        - pessoaId
+        - presencaRegistradaEm
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        palestraId:
+          type: string
+          format: uuid
+        pessoaId:
+          type: string
+          format: uuid
+        presencaRegistradaEm:
+          type: string
+          format: date-time
+    RegistrarUsuarioRequest:
+      required:
+        - usuarioNome
+        - usuarioEmail
+        - senha
+        - perfis
+      type: object
+      properties:
+        usuarioNome:
+          type: string
+        usuarioEmail:
+          type: string
+        senha:
+          type: string
+        perfis:
+          type: array
+          items:
+            type: string
+    RegistrarUsuarioResponse:
+      required:
+        - id
+        - usuarioNome
+        - usuarioEmail
+        - perfis
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        usuarioNome:
+          type: string
+        usuarioEmail:
+          type: string
+        perfis:
+          type: array
+          items:
+            type: string
     SalaTipo:
       enum:
         - AmbienteUnico
@@ -1016,6 +4445,37 @@ components:
         - AreaRecreacao
         - Coworking
         - Outro
+    ValidarCertificadoResponse:
+      required:
+        - certificadoCodigo
+        - palestraTitulo
+        - eventoNome
+        - pessoaNome
+        - palestraInicio
+        - certificadoEmitidoEm
+        - certificadoCargaHorariaMinutos
+      type: object
+      properties:
+        certificadoCodigo:
+          type: string
+        palestraTitulo:
+          type: string
+        eventoNome:
+          type: string
+        pessoaNome:
+          type: string
+        palestraInicio:
+          type: string
+          format: date-time
+        certificadoEmitidoEm:
+          type: string
+          format: date-time
+        certificadoCargaHorariaMinutos:
+          pattern: '^-?(?:0|[1-9]\d*)$'
+          type:
+            - integer
+            - string
+          format: int32
   securitySchemes:
     Bearer:
       type: http
@@ -1023,4 +4483,9 @@ components:
       scheme: bearer
       bearerFormat: JWT
 tags:
+  - name: Auditoria
+  - name: Eventos
+  - name: Identidade
   - name: Locais
+  - name: Palestras
+  - name: Pessoas

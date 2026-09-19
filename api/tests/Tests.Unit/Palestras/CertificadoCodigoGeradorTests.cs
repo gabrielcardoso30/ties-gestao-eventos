@@ -31,9 +31,9 @@ public class CertificadoCodigoGeradorTests
     }
 
     [Fact]
-    public void Alfabeto_deve_ter_32_simbolos_para_mapeamento_sem_vies()
+    public void Alfabeto_deve_conter_apenas_os_31_simbolos_nao_ambiguos()
     {
-        CertificadoCodigoGerador.Alfabeto.Length.ShouldBe(32);
-        CertificadoCodigoGerador.Alfabeto.Distinct().Count().ShouldBe(32);
+        CertificadoCodigoGerador.Alfabeto.Length.ShouldBe(31);
+        CertificadoCodigoGerador.Alfabeto.Distinct().Count().ShouldBe(31);
     }
 }

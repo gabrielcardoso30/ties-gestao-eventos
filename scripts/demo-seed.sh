@@ -15,11 +15,18 @@ SUFIXO="${SEED_SUFIXO:-$(date +%H%M%S)}"
 command -v jq >/dev/null || { echo "jq é necessário (brew install jq)"; exit 1; }
 
 say() { printf '\n\033[1;36m▶ %s\033[0m\n' "$*"; }
-post() { curl -sS -X POST "$API$1" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "$2"; }
-patch() { curl -sS -X PATCH "$API$1" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "$2"; }
+post() { curl -fsS -X POST "$API$1" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "$2"; }
+patch() { curl -fsS -X PATCH "$API$1" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "$2"; }
+
+say "Aguardando a API em $API"
+for tentativa in $(seq 1 30); do
+  curl -fsS "$API/health/ready" >/dev/null 2>&1 && break
+  [ "$tentativa" -eq 30 ] && { echo "API não ficou pronta em 30 segundos"; exit 1; }
+  sleep 1
+done
 
 say "Autenticando em $API como $EMAIL"
-TOKEN=$(curl -sS -X POST "$API/api/v1/identidade/sessoes" -H "Content-Type: application/json" \
+TOKEN=$(curl -fsS -X POST "$API/api/v1/identidade/sessoes" -H "Content-Type: application/json" \
   -d "{\"usuarioEmail\":\"$EMAIL\",\"senha\":\"$SENHA\"}" | jq -r '.accessToken')
 [ "$TOKEN" != "null" ] && [ -n "$TOKEN" ] || { echo "Falha no login"; exit 1; }
 
@@ -72,9 +79,9 @@ echo "$CERT" | jq -c '{certificadoCodigo, pessoaNome, certificadoCargaHorariaMin
 CODIGO=$(echo "$CERT" | jq -r '.certificadoCodigo')
 
 say "Validação pública do certificado (sem token)"
-curl -sS "$API/api/v1/palestras/certificados/$CODIGO" | jq -c .
+curl -fsS "$API/api/v1/palestras/certificados/$CODIGO" | jq -c .
 
 say "Auditoria (últimos registros)"
-curl -sS "$API/api/v1/auditoria/registros?tamanhoPagina=5" -H "Authorization: Bearer $TOKEN" | jq -c '.itens[] | {modulo, entidadeNome, operacao, usuarioNome}'
+curl -fsS "$API/api/v1/auditoria/registros?tamanhoPagina=5" -H "Authorization: Bearer $TOKEN" | jq -c '.itens[] | {modulo, entidadeNome, operacao, usuarioNome}'
 
 say "Pronto. Evento: $API/swagger | Front: http://localhost:5173/eventos/$EVENTO_ID | Certificado público: http://localhost:5173/certificados/$CODIGO"
