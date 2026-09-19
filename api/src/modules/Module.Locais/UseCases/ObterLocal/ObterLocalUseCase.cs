@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Module.Locais.Domain;
 using Module.Locais.Shared;
 using Shared.Http.Endpoints;
@@ -6,7 +7,7 @@ using Shared.Http.Results;
 
 namespace Module.Locais.UseCases.ObterLocal;
 
-internal sealed class ObterLocalUseCase(LocaisDbContext db) : IUseCase<ObterLocalRequest, ObterLocalResponse>
+internal sealed class ObterLocalUseCase(LocaisDbContext db, ILogger<ObterLocalUseCase> logger) : IUseCase<ObterLocalRequest, ObterLocalResponse>
 {
     public async Task<Result<ObterLocalResponse>> HandleAsync(ObterLocalRequest request, CancellationToken cancellationToken)
     {
@@ -22,6 +23,13 @@ internal sealed class ObterLocalUseCase(LocaisDbContext db) : IUseCase<ObterLoca
                     .ToList()))
             .FirstOrDefaultAsync(cancellationToken);
 
-        return local is null ? LocaisErros.LocalNaoEncontrado : local;
+        if (local is null)
+        {
+            logger.LogInformation("Local {LocalId} não encontrado para detalhamento", request.LocalId);
+            return LocaisErros.LocalNaoEncontrado;
+        }
+
+        logger.LogInformation("Local {LocalId} carregado com {RoomCount} sala(s) e capacidade total {TotalCapacity}", local.Id, local.Salas.Count, local.LocalCapacidadeTotal);
+        return local;
     }
 }

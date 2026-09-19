@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Module.Identidade.Domain;
 using Module.Identidade.Shared;
 using Shared.Http.Endpoints;
@@ -6,7 +7,7 @@ using Shared.Http.Results;
 
 namespace Module.Identidade.UseCases.ObterUsuarioAtual;
 
-internal sealed class ObterUsuarioAtualUseCase(IdentidadeDbContext db) : IUseCase<ObterUsuarioAtualRequest, ObterUsuarioAtualResponse>
+internal sealed class ObterUsuarioAtualUseCase(IdentidadeDbContext db, ILogger<ObterUsuarioAtualUseCase> logger) : IUseCase<ObterUsuarioAtualRequest, ObterUsuarioAtualResponse>
 {
     public async Task<Result<ObterUsuarioAtualResponse>> HandleAsync(ObterUsuarioAtualRequest request, CancellationToken cancellationToken)
     {
@@ -22,6 +23,13 @@ internal sealed class ObterUsuarioAtualUseCase(IdentidadeDbContext db) : IUseCas
                 u.UltimoAcessoEm))
             .FirstOrDefaultAsync(cancellationToken);
 
-        return usuario is null ? IdentidadeErros.UsuarioNaoEncontrado : usuario;
+        if (usuario is null)
+        {
+            logger.LogInformation("Usuário atual {UsuarioId} não encontrado", request.UsuarioId);
+            return IdentidadeErros.UsuarioNaoEncontrado;
+        }
+
+        logger.LogInformation("Usuário atual {UsuarioId} carregado com {ProfileCount} perfil(is)", usuario.Id, usuario.Perfis.Count);
+        return usuario;
     }
 }

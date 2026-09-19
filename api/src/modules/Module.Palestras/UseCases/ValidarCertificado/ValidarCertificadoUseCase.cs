@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Module.Palestras.Domain;
 using Module.Palestras.Shared;
 using Shared.Contracts.Eventos;
@@ -13,7 +14,7 @@ namespace Module.Palestras.UseCases.ValidarCertificado;
 /// Validação pública de certificado pelo código. Consulta o certificado primeiro e só depois enriquece via contratos.
 /// A palestra é lida ignorando o filtro de soft delete: certificados permanecem válidos após a exclusão lógica da palestra.
 /// </summary>
-internal sealed class ValidarCertificadoUseCase(PalestrasDbContext db, IEventosModuleApi eventosApi, IPessoasModuleApi pessoasApi) : IUseCase<ValidarCertificadoRequest, ValidarCertificadoResponse>
+internal sealed class ValidarCertificadoUseCase(PalestrasDbContext db, IEventosModuleApi eventosApi, IPessoasModuleApi pessoasApi, ILogger<ValidarCertificadoUseCase> logger) : IUseCase<ValidarCertificadoRequest, ValidarCertificadoResponse>
 {
     public async Task<Result<ValidarCertificadoResponse>> HandleAsync(ValidarCertificadoRequest request, CancellationToken cancellationToken)
     {
@@ -27,8 +28,11 @@ internal sealed class ValidarCertificadoUseCase(PalestrasDbContext db, IEventosM
             .FirstOrDefaultAsync(cancellationToken);
         if (certificado is null)
         {
+            logger.LogInformation("Código de certificado não encontrado durante validação pública");
             return PalestrasErros.CertificadoNaoEncontrado;
         }
+
+        logger.LogDebug("Certificado localizado; carregando palestra {TalkId} inclusive se excluída logicamente", certificado.PalestraId);
 
         var palestra = await db.Palestras
             .TagWith("Palestras.ValidarCertificado.Palestra")
@@ -39,11 +43,15 @@ internal sealed class ValidarCertificadoUseCase(PalestrasDbContext db, IEventosM
             .FirstOrDefaultAsync(cancellationToken);
         if (palestra is null)
         {
+            logger.LogWarning("Certificado referencia palestra {TalkId} inexistente mesmo ignorando exclusão lógica", certificado.PalestraId);
             return PalestrasErros.CertificadoNaoEncontrado;
         }
 
+        logger.LogDebug("Consultando evento {EventId} para enriquecer a validação do certificado", palestra.EventoId);
         var evento = await eventosApi.ObterEventoResumoAsync(palestra.EventoId, cancellationToken);
+        logger.LogDebug("Consultando pessoa {PersonId} para enriquecer a validação do certificado", certificado.PessoaId);
         var pessoa = await pessoasApi.ObterPessoaResumoAsync(certificado.PessoaId, cancellationToken);
+        logger.LogInformation("Certificado validado para palestra {TalkId}; referências ausentes: evento={MissingEvent}, pessoa={MissingPerson}", certificado.PalestraId, evento is null, pessoa is null);
 
         return new ValidarCertificadoResponse(
             certificado.CertificadoCodigo,

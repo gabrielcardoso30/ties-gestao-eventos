@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Module.Identidade.Domain;
 using Module.Identidade.Shared;
 using Module.Identidade.Shared.Seguranca;
@@ -18,7 +19,8 @@ internal sealed class CriarSessaoUseCase(
     UserManager<Usuario> userManager,
     SignInManager<Usuario> signInManager,
     ITokenService tokenService,
-    TimeProvider timeProvider) : IUseCase<CriarSessaoRequest, CriarSessaoResponse>
+    TimeProvider timeProvider,
+    ILogger<CriarSessaoUseCase> logger) : IUseCase<CriarSessaoRequest, CriarSessaoResponse>
 {
     public async Task<Result<CriarSessaoResponse>> HandleAsync(CriarSessaoRequest request, CancellationToken cancellationToken)
     {
@@ -28,23 +30,28 @@ internal sealed class CriarSessaoUseCase(
             .FirstOrDefaultAsync(u => u.NormalizedEmail == emailNormalizado, cancellationToken);
         if (usuario is null)
         {
+            logger.LogInformation("Autenticação rejeitada: credencial não corresponde a usuário cadastrado");
             return IdentidadeErros.CredenciaisInvalidas;
         }
 
         if (!usuario.EstaAtivo)
         {
+            logger.LogInformation("Autenticação rejeitada: usuário {UsuarioId} está inativo", usuario.Id);
             return IdentidadeErros.UsuarioInativo;
         }
 
         // lockoutOnFailure: cada falha incrementa AccessFailedCount (persistido pelo Identity); na 5ª o usuário é bloqueado por 5 min.
+        logger.LogDebug("Validando senha do usuário {UsuarioId} com política de bloqueio habilitada", usuario.Id);
         var verificacao = await signInManager.CheckPasswordSignInAsync(usuario, request.Senha, lockoutOnFailure: true);
         if (verificacao.IsLockedOut)
         {
+            logger.LogWarning("Autenticação bloqueada para usuário {UsuarioId} após falhas consecutivas", usuario.Id);
             return IdentidadeErros.UsuarioBloqueado;
         }
 
         if (!verificacao.Succeeded)
         {
+            logger.LogInformation("Autenticação rejeitada por credencial inválida para usuário {UsuarioId}; tentativas falhas={FailedAccessCount}", usuario.Id, usuario.AccessFailedCount);
             return IdentidadeErros.CredenciaisInvalidas;
         }
 
@@ -55,12 +62,15 @@ internal sealed class CriarSessaoUseCase(
             .Join(db.Perfis, up => up.RoleId, p => p.Id, (up, p) => p.Name!)
             .OrderBy(nome => nome)
             .ToListAsync(cancellationToken);
+        logger.LogInformation("Usuário {UsuarioId} autenticado com {ProfileCount} perfil(is)", usuario.Id, perfis.Count);
 
+        logger.LogDebug("Chamando agregado Usuário {UsuarioId}.RegistrarAcesso para registrar autenticação e evento de integração", usuario.Id);
         usuario.RegistrarAcesso(timeProvider.GetUtcNow());
 
         return await db.ExecuteInTransactionAsync(async ct =>
         {
             await db.SaveChangesAsync(ct);
+            logger.LogDebug("Último acesso e evento de autenticação persistidos para usuário {UsuarioId}; gerando token", usuario.Id);
             var token = tokenService.Gerar(usuario, perfis);
             return Result.Success(new CriarSessaoResponse(
                 token.AccessToken,

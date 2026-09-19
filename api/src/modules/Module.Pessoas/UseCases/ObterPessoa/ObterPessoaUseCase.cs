@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Module.Pessoas.Domain;
 using Module.Pessoas.Shared;
 using Shared.Http.Endpoints;
@@ -6,7 +7,7 @@ using Shared.Http.Results;
 
 namespace Module.Pessoas.UseCases.ObterPessoa;
 
-internal sealed class ObterPessoaUseCase(PessoasDbContext db) : IUseCase<ObterPessoaRequest, ObterPessoaResponse>
+internal sealed class ObterPessoaUseCase(PessoasDbContext db, ILogger<ObterPessoaUseCase> logger) : IUseCase<ObterPessoaRequest, ObterPessoaResponse>
 {
     public async Task<Result<ObterPessoaResponse>> HandleAsync(ObterPessoaRequest request, CancellationToken cancellationToken)
     {
@@ -19,6 +20,13 @@ internal sealed class ObterPessoaUseCase(PessoasDbContext db) : IUseCase<ObterPe
                 p.PessoaMiniBio, p.PessoaFotoUrl, p.EstaAtivo, p.CriadoEm, p.AlteradoEm))
             .FirstOrDefaultAsync(cancellationToken);
 
-        return pessoa is null ? PessoasErros.PessoaNaoEncontrada : pessoa;
+        if (pessoa is null)
+        {
+            logger.LogInformation("Pessoa {PessoaId} não encontrada para detalhamento", request.PessoaId);
+            return PessoasErros.PessoaNaoEncontrada;
+        }
+
+        logger.LogInformation("Pessoa {PessoaId} carregada; ativo={Active}, documento informado={HasDocument}", pessoa.Id, pessoa.EstaAtivo, pessoa.PessoaDocumento is not null);
+        return pessoa;
     }
 }

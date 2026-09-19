@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Module.Palestras.Domain;
 using Module.Palestras.Shared;
 using Module.Palestras.UseCases.CriarPalestra;
@@ -34,7 +35,11 @@ public sealed class CriarPalestraUseCaseTests : IDisposable
             .Returns(call => new TrilhaResumo(call.ArgAt<Guid>(1), call.ArgAt<Guid>(0), "Principal", true));
     }
 
-    private CriarPalestraUseCase CriarUseCase() => new(_db, new AgendaPalestraVerificador(_eventos, _locais), _pessoas);
+    private CriarPalestraUseCase CriarUseCase() => new(
+        _db,
+        new AgendaPalestraVerificador(_eventos, _locais, NullLogger<AgendaPalestraVerificador>.Instance),
+        _pessoas,
+        NullLogger<CriarPalestraUseCase>.Instance);
 
     private static CriarPalestraRequest Request(Guid? salaId = null) => new(
         Guid.NewGuid(), Guid.NewGuid(), salaId, "Monolito modular", null, EventoInicio.AddHours(1), EventoInicio.AddHours(2),

@@ -50,7 +50,8 @@ public sealed class IdentidadeModule : IModule
                 o.User.RequireUniqueEmail = true;
             })
             .AddRoles<Perfil>()
-            .AddEntityFrameworkStores<IdentidadeDbContext>()
+            .AddUserStore<IdentidadeUserStore>()
+            .AddRoleStore<IdentidadeRoleStore>()
             .AddSignInManager()
             .AddDefaultTokenProviders()
             .AddErrorDescriber<IdentidadeErrorDescriber>();

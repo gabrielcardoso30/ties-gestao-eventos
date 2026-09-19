@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Shared.Http.Results;
 
 namespace Shared.Http.Validation;
 
 /// <summary>Filtro de endpoint: valida o request com FluentValidation e devolve 400 ValidationProblemDetails antes de chegar ao caso de uso.</summary>
-public sealed class ValidationFilter<TRequest> : IEndpointFilter where TRequest : class
+public sealed class ValidationFilter<TRequest>(ILogger<ValidationFilter<TRequest>> logger) : IEndpointFilter where TRequest : class
 {
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
@@ -16,6 +17,9 @@ public sealed class ValidationFilter<TRequest> : IEndpointFilter where TRequest 
         var request = context.Arguments.OfType<TRequest>().FirstOrDefault();
         if (validator is null || request is null)
         {
+            logger.LogDebug(
+                "Validação não executada para {RequestType}: validador presente={ValidatorPresent}, request presente={RequestPresent}",
+                typeof(TRequest).Name, validator is not null, request is not null);
             return await next(context);
         }
 
@@ -24,12 +28,17 @@ public sealed class ValidationFilter<TRequest> : IEndpointFilter where TRequest 
         var resultado = await validator.ValidateAsync(request, context.HttpContext.RequestAborted);
         if (resultado.IsValid)
         {
+            logger.LogDebug("Validação de {RequestType} concluída sem violações", typeof(TRequest).Name);
             return await next(context);
         }
 
         var erros = resultado.Errors
             .GroupBy(e => e.PropertyName)
             .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+
+        logger.LogWarning(
+            "Validação de {RequestType} rejeitou a requisição com {ValidationErrorCount} violação(ões) nos campos {ValidationFields}",
+            typeof(TRequest).Name, resultado.Errors.Count, erros.Keys.Order(StringComparer.Ordinal).ToArray());
 
         return TypedResults.ValidationProblem(erros,
             title: "Requisição inválida",

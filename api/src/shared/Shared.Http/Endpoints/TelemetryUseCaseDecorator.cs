@@ -6,8 +6,8 @@ using Shared.Observability.Telemetria;
 namespace Shared.Http.Endpoints;
 
 /// <summary>
-/// Decorator transparente aplicado a TODO caso de uso: span de trace, duração, contadores de execução/falha e log
-/// estruturado do erro de negócio. Os casos de uso ficam livres de código de observabilidade.
+/// Decorator transparente aplicado a TODO caso de uso: garante o envelope comum de início/fim, span de trace,
+/// duração, contadores de execução/falha e erro estruturado; os logs internos detalham o fluxo de negócio.
 /// </summary>
 internal sealed class TelemetryUseCaseDecorator<TRequest, TResponse>(
     IUseCase<TRequest, TResponse> inner,
@@ -26,6 +26,22 @@ internal sealed class TelemetryUseCaseDecorator<TRequest, TResponse>(
     {
         using var activity = telemetry.StartActivity(UseCaseName);
         var inicio = Stopwatch.GetTimestamp();
+        var contexto = UseCaseLogContext.From(request);
+
+        using var scope = logger.BeginScope(new Dictionary<string, object?>
+        {
+            ["Modulo"] = telemetry.Modulo,
+            ["UseCase"] = UseCaseName
+        });
+
+        activity?.SetTag("usecase.name", UseCaseName);
+        activity?.SetTag("module.name", telemetry.Modulo);
+        foreach (var (chave, valor) in contexto)
+        {
+            activity?.SetTag($"request.{chave}", valor);
+        }
+
+        logger.LogInformation("Iniciando caso de uso {UseCase} com {@RequestContext}", UseCaseName, contexto);
         try
         {
             var resultado = await inner.HandleAsync(request, cancellationToken);
@@ -34,16 +50,34 @@ internal sealed class TelemetryUseCaseDecorator<TRequest, TResponse>(
             {
                 activity?.SetTag("error.code", resultado.Error.Code);
                 activity?.SetTag("error.type", resultado.Error.Type.ToString());
-                logger.LogInformation("Caso de uso {UseCase} retornou {ErrorCode}: {ErrorMessage}", UseCaseName, resultado.Error.Code, resultado.Error.Message);
+                logger.LogWarning(
+                    "Caso de uso {UseCase} rejeitado pela regra {ErrorCode} ({ErrorType}) em {DurationMs:0.0} ms: {ErrorMessage}",
+                    UseCaseName, resultado.Error.Code, resultado.Error.Type, duracao, resultado.Error.Message);
+            }
+            else
+            {
+                logger.LogInformation("Caso de uso {UseCase} concluído com sucesso em {DurationMs:0.0} ms", UseCaseName, duracao);
             }
 
             telemetry.RegistrarExecucao(UseCaseName, resultado.IsSuccess, duracao, resultado.IsFailure ? resultado.Error.Code : null);
             return resultado;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            var duracao = Stopwatch.GetElapsedTime(inicio).TotalMilliseconds;
+            activity?.SetStatus(ActivityStatusCode.Error, "Cancelado");
+            activity?.SetTag("canceled", true);
+            telemetry.RegistrarExecucao(UseCaseName, false, duracao, "Cancelado");
+            logger.LogWarning("Caso de uso {UseCase} cancelado após {DurationMs:0.0} ms", UseCaseName, duracao);
+            throw;
+        }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            var duracao = Stopwatch.GetElapsedTime(inicio).TotalMilliseconds;
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            telemetry.RegistrarExecucao(UseCaseName, false, Stopwatch.GetElapsedTime(inicio).TotalMilliseconds, "Excecao");
+            activity?.AddException(ex);
+            telemetry.RegistrarExecucao(UseCaseName, false, duracao, "Excecao");
+            logger.LogError(ex, "Caso de uso {UseCase} falhou inesperadamente após {DurationMs:0.0} ms", UseCaseName, duracao);
             throw;
         }
     }
