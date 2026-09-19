@@ -15,4 +15,7 @@
     <PackageReference Include="Testcontainers.PostgreSql" />
     <ProjectReference Include="../../src/hosts/Host.Api/Host.Api.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="../../../docs/contracts/v1/openapi.yaml" Link="contracts/v1/openapi.yaml" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
