@@ -32,6 +32,12 @@ public sealed class ContextoDoCenario
         return UltimaResposta;
     }
 
+    public async Task<HttpResponseMessage> PostAnonimoAsync(string url, object corpo)
+    {
+        UltimaResposta = await ApiHooks.Api.CreateClient().PostAsJsonAsync(url, corpo);
+        return UltimaResposta;
+    }
+
     public async Task<HttpResponseMessage> PutAsync(string url, object corpo)
     {
         UltimaResposta = await Client.PutAsJsonAsync(url, corpo);
