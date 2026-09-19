@@ -17,4 +17,7 @@
     <ProjectReference Include="../../shared/Shared.Messaging/Shared.Messaging.csproj" />
     <ProjectReference Include="../../shared/Shared.WebHost/Shared.WebHost.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Tests.Unit" />
+  </ItemGroup>
 </Project>

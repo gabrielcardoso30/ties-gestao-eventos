@@ -1,0 +1,42 @@
+using Microsoft.EntityFrameworkCore;
+using Module.Identidade.Shared;
+using Shared.Contracts.Common;
+using Shared.Data.Extensions;
+using Shared.Http.Endpoints;
+using Shared.Http.Results;
+
+namespace Module.Identidade.UseCases.ListarUsuarios;
+
+/// <summary>Listagem administrativa com projeção direta (sem UserManager): perfis via join em UsuarioPerfis/Perfis.</summary>
+internal sealed class ListarUsuariosUseCase(IdentidadeDbContext db) : IUseCase<ListarUsuariosRequest, PagedResult<ListarUsuariosItemResponse>>
+{
+    public async Task<Result<PagedResult<ListarUsuariosItemResponse>>> HandleAsync(ListarUsuariosRequest request, CancellationToken cancellationToken)
+    {
+        var query = db.Usuarios.TagWith("Identidade.ListarUsuarios").AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(request.Busca))
+        {
+            var busca = $"%{request.Busca.Trim()}%";
+            query = query.Where(u => EF.Functions.ILike(u.UsuarioNome, busca) || EF.Functions.ILike(u.Email!, busca));
+        }
+
+        if (request.EstaAtivo.HasValue)
+        {
+            query = query.Where(u => u.EstaAtivo == request.EstaAtivo.Value);
+        }
+
+        var pagina = await query
+            .OrderBy(u => u.UsuarioNome)
+            .ThenBy(u => u.Id)
+            .Select(u => new ListarUsuariosItemResponse(
+                u.Id,
+                u.UsuarioNome,
+                u.Email ?? string.Empty,
+                db.UsuarioPerfis.Where(up => up.UserId == u.Id).Join(db.Perfis, up => up.RoleId, p => p.Id, (up, p) => p.Name!).OrderBy(nome => nome).ToList(),
+                u.EstaAtivo,
+                u.UltimoAcessoEm))
+            .ToPagedResultAsync(new PagedRequest(request.Pagina, request.TamanhoPagina), cancellationToken);
+
+        return pagina;
+    }
+}

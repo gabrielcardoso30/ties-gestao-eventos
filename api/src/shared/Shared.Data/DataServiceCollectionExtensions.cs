@@ -29,7 +29,7 @@ public static class DataServiceCollectionExtensions
     /// retry para falhas transitórias, interceptors de auditoria/outbox e a fonte Outbox do módulo.
     /// </summary>
     public static IHostApplicationBuilder AddModuleDbContext<TContext>(this IHostApplicationBuilder builder, string schema)
-        where TContext : ModuleDbContext
+        where TContext : DbContext, IModuleDbContext
     {
         var connectionString = builder.Configuration.GetConnectionString(ConnectionStringName)
             ?? throw new InvalidOperationException($"ConnectionStrings:{ConnectionStringName} não configurada");

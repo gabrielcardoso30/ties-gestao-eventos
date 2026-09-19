@@ -8,7 +8,7 @@ namespace Shared.Data.Outbox;
 /// múltiplas instâncias da API (ou um Host.Worker) processarem em paralelo sem duplicar entregas.
 /// </summary>
 internal sealed class OutboxStore<TContext>(IServiceScopeFactory scopeFactory, TimeProvider timeProvider) : IOutboxStore
-    where TContext : ModuleDbContext
+    where TContext : DbContext, IModuleDbContext
 {
     public string Modulo => ModuleDbContext.ResolveModuleName(typeof(TContext));
 

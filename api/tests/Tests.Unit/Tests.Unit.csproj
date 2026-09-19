@@ -16,5 +16,6 @@
     <ProjectReference Include="../../src/modules/Module.Pessoas/Module.Pessoas.csproj" />
     <ProjectReference Include="../../src/modules/Module.Eventos/Module.Eventos.csproj" />
     <ProjectReference Include="../../src/modules/Module.Palestras/Module.Palestras.csproj" />
+    <ProjectReference Include="../../src/modules/Module.Identidade/Module.Identidade.csproj" />
   </ItemGroup>
 </Project>

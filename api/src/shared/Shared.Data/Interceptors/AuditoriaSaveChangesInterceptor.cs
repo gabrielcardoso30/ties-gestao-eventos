@@ -30,9 +30,9 @@ public sealed class AuditoriaSaveChangesInterceptor(ICurrentUser currentUser, Ti
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
-        if (eventData.Context is ModuleDbContext db)
+        if (eventData.Context is IModuleDbContext contexto)
         {
-            Processar(db);
+            Processar(eventData.Context, contexto);
         }
 
         return base.SavingChanges(eventData, result);
@@ -40,15 +40,15 @@ public sealed class AuditoriaSaveChangesInterceptor(ICurrentUser currentUser, Ti
 
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
     {
-        if (eventData.Context is ModuleDbContext db)
+        if (eventData.Context is IModuleDbContext contexto)
         {
-            Processar(db);
+            Processar(eventData.Context, contexto);
         }
 
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
-    private void Processar(ModuleDbContext db)
+    private void Processar(DbContext db, IModuleDbContext contexto)
     {
         var agora = timeProvider.GetUtcNow();
         var usuarioNome = currentUser.Nome ?? currentUser.Email ?? UsuarioSistema;
@@ -67,7 +67,7 @@ public sealed class AuditoriaSaveChangesInterceptor(ICurrentUser currentUser, Ti
                 AplicarAuditoria(entry, auditavel, agora, usuarioNome);
             }
 
-            if (db.AuditChangesEnabled && entry.State is EntityState.Added or EntityState.Modified)
+            if (contexto.AuditChangesEnabled && entry.State is EntityState.Added or EntityState.Modified)
             {
                 var registro = CriarRegistroAuditoria(entry, modulo, traceId);
                 if (registro is not null)
@@ -85,7 +85,7 @@ public sealed class AuditoriaSaveChangesInterceptor(ICurrentUser currentUser, Ti
 
         if (mensagens.Count > 0)
         {
-            db.OutboxMessages.AddRange(mensagens);
+            contexto.OutboxMessages.AddRange(mensagens);
         }
     }
 
@@ -119,7 +119,7 @@ public sealed class AuditoriaSaveChangesInterceptor(ICurrentUser currentUser, Ti
 
         if (entry.State == EntityState.Added)
         {
-            var novos = entry.Properties.ToDictionary(p => p.Metadata.Name, p => p.CurrentValue);
+            var novos = entry.Properties.ToDictionary(p => p.Metadata.Name, p => ValorAuditavel(p, p.CurrentValue));
             return Novo(modulo, nome, chave, OperacoesAuditoria.Inclusao, null, novos, traceId);
         }
 
@@ -130,10 +130,14 @@ public sealed class AuditoriaSaveChangesInterceptor(ICurrentUser currentUser, Ti
         }
 
         var excluindo = alteradas.Any(p => p.Metadata.Name == nameof(IEntidadeAuditavel.ExcluidoEm) && p.CurrentValue is not null);
-        var anteriores = alteradas.ToDictionary(p => p.Metadata.Name, p => p.OriginalValue);
-        var atuais = alteradas.ToDictionary(p => p.Metadata.Name, p => p.CurrentValue);
+        var anteriores = alteradas.ToDictionary(p => p.Metadata.Name, p => ValorAuditavel(p, p.OriginalValue));
+        var atuais = alteradas.ToDictionary(p => p.Metadata.Name, p => ValorAuditavel(p, p.CurrentValue));
         return Novo(modulo, nome, chave, excluindo ? OperacoesAuditoria.Exclusao : OperacoesAuditoria.Alteracao, anteriores, atuais, traceId);
     }
+
+    /// <summary>Propriedades marcadas com <see cref="EntityTypeBuilderExtensions.Sensivel{TProperty}"/> nunca vão para a trilha (ex.: hash de senha).</summary>
+    private static object? ValorAuditavel(PropertyEntry propriedade, object? valor) =>
+        valor is not null && propriedade.Metadata.FindAnnotation(EntityTypeBuilderExtensions.SensivelAnnotation)?.Value is true ? "***" : valor;
 
     private EntidadeAlterada Novo(string modulo, string entidade, string chave, string operacao, Dictionary<string, object?>? antes, Dictionary<string, object?> depois, string? traceId) =>
         new(modulo, entidade, chave, operacao,
