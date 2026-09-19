@@ -23,3 +23,19 @@ Funcionalidade: Gestão de pessoas
     Quando excluo a pessoa cadastrada
     Então a resposta deve ter status 204
     E a pessoa cadastrada não deve mais ser encontrada
+
+  Cenário: E-mail inválido é rejeitado
+    Quando tento cadastrar uma pessoa com e-mail inválido
+    Então a resposta deve ter status 400
+    E a resposta deve ser um problema com código "Validacao"
+
+  Cenário: Organizador pode atualizar os dados da pessoa
+    Dado que cadastrei uma pessoa chamada "Katherine Johnson"
+    Quando altero o nome da pessoa para "Katherine Coleman Johnson"
+    Então a resposta deve ter status 200
+    E consigo consultar a pessoa com o nome "Katherine Coleman Johnson"
+
+  Cenário: Participante não pode cadastrar pessoas
+    Dado que estou autenticado como "Participante"
+    Quando cadastro uma pessoa chamada "Pessoa Proibida"
+    Então a resposta deve ter status 403

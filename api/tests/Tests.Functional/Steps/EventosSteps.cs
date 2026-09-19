@@ -48,4 +48,21 @@ public sealed class EventosSteps(ContextoDoCenario contexto)
         await contexto.GetAsync($"/api/v1/eventos/{contexto.Ids["evento"]}");
         contexto.UltimaResposta!.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    [When("tento criar um evento remoto sem link")]
+    public async Task CriarRemotoSemLink()
+    {
+        var inicio = DateTimeOffset.UtcNow.AddDays(5);
+        await contexto.PostAsync("/api/v1/eventos", new { eventoNome = contexto.NomeUnico("Sem link"), eventoDataInicio = inicio, eventoDataFim = inicio.AddHours(2), eventoFormato = "Remoto" });
+    }
+
+    [When("tento criar um evento remoto com capacidade zero")]
+    public async Task CriarCapacidadeZero()
+    {
+        var inicio = DateTimeOffset.UtcNow.AddDays(5);
+        await contexto.PostAsync("/api/v1/eventos", new { eventoNome = contexto.NomeUnico("Sem capacidade"), eventoDataInicio = inicio, eventoDataFim = inicio.AddHours(2), eventoFormato = "Remoto", eventoLinkRemoto = "https://evento.teste.local", eventoCapacidadeMaxima = 0 });
+    }
+
+    [When("tento publicar o evento")]
+    public async Task PublicarEvento() => await contexto.PatchAsync($"/api/v1/eventos/{contexto.Ids["evento"]}/situacao", new { eventoSituacao = "Publicado" });
 }

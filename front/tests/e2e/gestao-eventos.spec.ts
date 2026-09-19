@@ -130,3 +130,62 @@ test('administrador cadastra usuário participante pela interface', async ({ pag
   await expect(page.getByRole('heading', { name: 'Usuários' })).toBeVisible()
   await expect(page.getByText(nome)).toBeVisible()
 })
+
+test('Locais: busca reduz a listagem ao registro desejado', async ({ page, request }) => {
+  const nome = `Busca Exclusiva ${Date.now()}`
+  const sessao = JSON.parse(sessaoAdministrador) as { accessToken: string }
+  const criado = await request.post('/api/v1/locais', { headers: { Authorization: `Bearer ${sessao.accessToken}` }, data: { localNome: nome, enderecoCidade: 'Vila Velha', enderecoUf: 'ES', capacidadeAmbienteUnico: 15 } })
+  expect(criado.status()).toBe(201)
+  await page.goto('/locais')
+  await page.getByPlaceholder('Buscar em locais').fill(nome)
+  await expect(page.locator('tbody tr')).toHaveCount(1)
+  await expect(page.getByText(nome, { exact: true })).toBeVisible()
+})
+
+test('Pessoas: campos obrigatórios impedem submissão vazia e cancelar retorna à lista', async ({ page }) => {
+  await page.goto('/pessoas/nova')
+  await page.getByRole('button', { name: 'Salvar' }).click()
+  await expect(page).toHaveURL(/\/pessoas\/nova$/)
+  await expect(page.getByLabel('Nome *')).toHaveAttribute('required', '')
+  await expect(page.getByLabel('E-mail *')).toHaveAttribute('required', '')
+  await page.getByRole('button', { name: 'Cancelar' }).click()
+  await expect(page).toHaveURL(/\/pessoas$/)
+})
+
+test('Eventos: detalhe inexistente apresenta estado de erro recuperável', async ({ page }) => {
+  await page.goto('/eventos/01999999-9999-7999-8999-999999999999')
+  await expect(page.getByText(/não encontrado|erro|não foi possível/i).first()).toBeVisible()
+})
+
+test('Palestras: usuário abre detalhe e visualiza palestrantes e conteúdos', async ({ page }) => {
+  await page.goto('/palestras')
+  const primeiraLinha = page.locator('tbody tr').first()
+  await expect(primeiraLinha).toBeVisible()
+  await primeiraLinha.click()
+  await expect(page.getByText(/Palestrantes \(\d+\)/)).toBeVisible()
+  await expect(page.getByText(/Conteúdos \(\d+\)/)).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Editar' })).toBeVisible()
+})
+
+test('Identidade: administrador altera o perfil de um usuário', async ({ page, request }) => {
+  const sufixo = Date.now()
+  const nome = `Perfil Playwright ${sufixo}`
+  const sessao = JSON.parse(sessaoAdministrador) as { accessToken: string }
+  const criado = await request.post('/api/v1/identidade/usuarios', { headers: { Authorization: `Bearer ${sessao.accessToken}` }, data: { usuarioNome: nome, usuarioEmail: `perfil-${sufixo}@teste.local`, senha: 'Senha@123456', perfis: ['Participante'] } })
+  expect(criado.status()).toBe(201)
+  const usuario = await criado.json() as { id: string }
+  await page.goto(`/usuarios/${usuario.id}/perfis`)
+  await page.getByLabel('Novo perfil *').selectOption('Organizador')
+  await page.getByRole('button', { name: 'Salvar' }).click()
+  await page.getByPlaceholder('Buscar em usuários').fill(nome)
+  await expect(page.getByRole('row', { name: new RegExp(`${nome}.*Organizador`) })).toBeVisible()
+})
+
+test('Auditoria: registro detalha identidade, correlação e estados', async ({ page }) => {
+  await page.goto('/auditoria')
+  await page.locator('tbody tr').first().click()
+  await expect(page.getByText('Identificador')).toBeVisible()
+  await expect(page.getByText('Trace ID')).toBeVisible()
+  await expect(page.getByText('Estado anterior')).toBeVisible()
+  await expect(page.getByText('Estado novo')).toBeVisible()
+})

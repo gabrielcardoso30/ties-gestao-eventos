@@ -27,3 +27,24 @@ Funcionalidade: Gestão do ciclo de vida de eventos
     Quando excluo o evento
     Então a resposta deve ter status 204
     E o evento não deve mais ser encontrado
+
+  Cenário: Evento remoto exige link de acesso
+    Quando tento criar um evento remoto sem link
+    Então a resposta deve ter status 400
+    E a resposta deve ser um problema com código "Validacao"
+
+  Cenário: Capacidade deve ser maior que zero
+    Quando tento criar um evento remoto com capacidade zero
+    Então a resposta deve ter status 400
+    E a resposta deve ser um problema com código "Validacao"
+
+  Cenário: Evento sem palestras não pode ser publicado
+    Dado que existe um evento remoto em rascunho
+    Quando tento publicar o evento
+    Então a resposta deve ter status 422
+    E a resposta deve ser um problema com código "Eventos.EventoSemPalestras"
+
+  Cenário: Participante não pode criar eventos
+    Dado que estou autenticado como "Participante"
+    Quando crio um evento remoto válido
+    Então a resposta deve ter status 403

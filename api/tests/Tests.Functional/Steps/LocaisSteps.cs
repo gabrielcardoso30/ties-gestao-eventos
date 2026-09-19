@@ -25,6 +25,25 @@ public sealed class LocaisSteps(ContextoDoCenario contexto)
         }
     }
 
+    [When("tento criar outro local chamado {string} com ambiente único para {int} pessoas")]
+    public async Task TentarCriarLocalDuplicado(string nome, int capacidade) => await QuandoCrioUmLocalComAmbienteUnico(nome, capacidade);
+
+    [When("tento criar um local com UF {string}")]
+    public async Task TentarCriarLocalComUf(string uf) => await contexto.PostAsync("/api/v1/locais", new
+    {
+        localNome = contexto.NomeUnico("Local UF inválida"), enderecoCidade = "Vila Velha", enderecoUf = uf, capacidadeAmbienteUnico = 10,
+    });
+
+    [When("excluo o local")]
+    public async Task ExcluirLocal() => await contexto.DeleteAsync($"/api/v1/locais/{contexto.Ids["local"]}");
+
+    [Then("o local não deve mais ser encontrado")]
+    public async Task LocalNaoEncontrado()
+    {
+        await contexto.GetAsync($"/api/v1/locais/{contexto.Ids["local"]}");
+        contexto.UltimaResposta!.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
     [When("adiciono a sala {string} com capacidade {int} do tipo {string}")]
     public async Task QuandoAdicionoASala(string nome, int capacidade, string tipo)
     {

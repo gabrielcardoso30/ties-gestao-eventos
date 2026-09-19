@@ -6,6 +6,7 @@ namespace Tests.Functional.Steps;
 [Binding]
 public sealed class IdentidadeSteps(ContextoDoCenario contexto)
 {
+    private string Email => $"usuario-{contexto.Sufixo}@teste.local";
     [When("autentico com o administrador inicial")]
     public async Task AutenticarAdministrador() => await contexto.PostAnonimoAsync("/api/v1/identidade/sessoes", new
     {
@@ -22,7 +23,7 @@ public sealed class IdentidadeSteps(ContextoDoCenario contexto)
     public async Task CadastrarUsuario(string perfil) => await contexto.PostAsync("/api/v1/identidade/usuarios", new
     {
         usuarioNome = contexto.NomeUnico("Usuário Funcional"),
-        usuarioEmail = $"usuario-{contexto.Sufixo}@teste.local",
+        usuarioEmail = Email,
         senha = "Senha@123456",
         perfis = new[] { perfil },
     });
@@ -38,4 +39,19 @@ public sealed class IdentidadeSteps(ContextoDoCenario contexto)
     [Then("o usuário deve possuir o perfil {string}")]
     public async Task ValidarPerfil(string perfil) =>
         (await contexto.CorpoJsonAsync()).GetProperty("perfis").EnumerateArray().Select(x => x.GetString()).ShouldContain(perfil);
+
+    [Given("que cadastrei um usuário com perfil {string}")]
+    public async Task UsuarioJaCadastrado(string perfil) => await CadastrarUsuario(perfil);
+
+    [When("tento cadastrar outro usuário com o mesmo e-mail")]
+    public async Task CadastrarDuplicado() => await contexto.PostAsync("/api/v1/identidade/usuarios", new
+    {
+        usuarioNome = contexto.NomeUnico("Duplicado"), usuarioEmail = Email, senha = "Senha@123456", perfis = new[] { "Participante" },
+    });
+
+    [When("tento cadastrar um usuário com senha fraca")]
+    public async Task CadastrarSenhaFraca() => await contexto.PostAsync("/api/v1/identidade/usuarios", new
+    {
+        usuarioNome = contexto.NomeUnico("Senha fraca"), usuarioEmail = Email, senha = "123", perfis = new[] { "Participante" },
+    });
 }

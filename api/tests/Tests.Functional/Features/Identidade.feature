@@ -24,3 +24,22 @@ Funcionalidade: Autenticação e autorização
     Dado que estou autenticado como "Participante"
     Quando cadastro um usuário com perfil "Participante"
     Então a resposta deve ter status 403
+
+  Cenário: E-mail de usuário deve ser único
+    Dado que estou autenticado como "Administrador"
+    E que cadastrei um usuário com perfil "Participante"
+    Quando tento cadastrar outro usuário com o mesmo e-mail
+    Então a resposta deve ter status 409
+    E a resposta deve ser um problema com código "Identidade.EmailJaCadastrado"
+
+  Cenário: Senha fraca é rejeitada
+    Dado que estou autenticado como "Administrador"
+    Quando tento cadastrar um usuário com senha fraca
+    Então a resposta deve ter status 422
+    E a resposta deve ser um problema com código "Identidade.SenhaFraca"
+
+  Cenário: Perfil desconhecido é rejeitado
+    Dado que estou autenticado como "Administrador"
+    Quando cadastro um usuário com perfil "SuperUsuario"
+    Então a resposta deve ter status 422
+    E a resposta deve ser um problema com código "Identidade.PerfilInvalido"

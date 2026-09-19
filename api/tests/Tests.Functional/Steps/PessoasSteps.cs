@@ -47,4 +47,23 @@ public sealed class PessoasSteps(ContextoDoCenario contexto)
         await contexto.GetAsync($"/api/v1/pessoas/{contexto.Ids["pessoa"]}");
         contexto.UltimaResposta!.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    [When("tento cadastrar uma pessoa com e-mail inválido")]
+    public async Task CadastrarEmailInvalido() => await contexto.PostAsync("/api/v1/pessoas", new
+    {
+        pessoaNome = contexto.NomeUnico("E-mail inválido"), pessoaEmail = "email-invalido",
+    });
+
+    [When("altero o nome da pessoa para {string}")]
+    public async Task AlterarNome(string nome) => await contexto.PutAsync($"/api/v1/pessoas/{contexto.Ids["pessoa"]}", new
+    {
+        pessoaNome = nome, pessoaEmail = Email, estaAtivo = true,
+    });
+
+    [Then("consigo consultar a pessoa com o nome {string}")]
+    public async Task ConsultarNome(string nome)
+    {
+        await contexto.GetAsync($"/api/v1/pessoas/{contexto.Ids["pessoa"]}");
+        (await contexto.CorpoJsonAsync()).GetProperty("pessoaNome").GetString().ShouldBe(nome);
+    }
 }

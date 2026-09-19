@@ -38,3 +38,20 @@ Funcionalidade: Gestão de locais e salas
     Dado que estou autenticado como "Participante"
     Quando crio um local chamado "Local Proibido" com ambiente único para 10 pessoas
     Então a resposta deve ter status 403
+
+  Cenário: Nome de local deve ser único
+    Dado que existe um local chamado "Local Repetido" com ambiente único para 40 pessoas
+    Quando tento criar outro local chamado "Local Repetido" com ambiente único para 60 pessoas
+    Então a resposta deve ter status 409
+    E a resposta deve ser um problema com código "Locais.LocalNomeDuplicado"
+
+  Cenário: UF deve possuir exatamente duas letras
+    Quando tento criar um local com UF "ESP"
+    Então a resposta deve ter status 400
+    E a resposta deve ser um problema com código "Validacao"
+
+  Cenário: Exclusão de local é lógica
+    Dado que existe um local chamado "Local Temporário" com ambiente único para 20 pessoas
+    Quando excluo o local
+    Então a resposta deve ter status 204
+    E o local não deve mais ser encontrado
