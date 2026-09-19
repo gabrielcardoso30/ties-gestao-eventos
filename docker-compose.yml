@@ -25,7 +25,7 @@ services:
       retries: 10
 
   otel:
-    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.4
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:13
     container_name: gestao-eventos-otel
     environment:
       DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
