@@ -315,3 +315,27 @@ test('Eventos: formulário cria e edita múltiplas trilhas', async ({ page }) =>
   await page.getByRole('button', { name: 'Adicionar trilha' }).click(); await page.getByLabel('Nome da trilha 3').fill('Dados'); await page.getByRole('button', { name: 'Remover trilha 2' }).click()
   await page.getByRole('button', { name: 'Salvar' }).click(); await expect(page.getByText('Arquitetura', { exact: true })).toBeVisible(); await expect(page.getByText('Dados', { exact: true })).toBeVisible(); await expect(page.getByText('Cloud', { exact: true })).toHaveCount(0)
 })
+
+test('Eventos: usuário abre a grade e visualiza palestras distribuídas por trilha', async ({ page, request }) => {
+  const sufixo = Date.now(); const sessao = JSON.parse(sessaoAdministrador) as { accessToken: string }; const headers = { Authorization: `Bearer ${sessao.accessToken}` }
+  const post = async (url: string, data: unknown) => { const resposta = await request.post(url, { headers, data }); expect(resposta.ok()).toBeTruthy(); return resposta.json() }
+  const inicio = new Date(Date.now() + 15 * 86400000); const fim = new Date(inicio.getTime() + 6 * 3600000)
+  const evento = await post('/api/v1/eventos', { eventoNome: `Evento Grade ${sufixo}`, eventoDataInicio: inicio.toISOString(), eventoDataFim: fim.toISOString(), eventoFormato: 'Remoto', eventoLinkRemoto: 'https://grade.test', trilhas: [{ trilhaNome: 'Arquitetura', trilhaCor: '#2563EB' }, { trilhaNome: 'Dados', trilhaCor: '#16A34A' }] }) as { id: string }
+  const detalhe = await (await request.get(`/api/v1/eventos/${evento.id}`, { headers })).json() as { trilhas: Array<{ id: string; trilhaNome: string }> }
+  const pessoa = await post('/api/v1/pessoas', { pessoaNome: `Palestrante Grade ${sufixo}`, pessoaEmail: `grade-${sufixo}@teste.local` }) as { id: string }
+  const horarioInicio = new Date(inicio.getTime() + 3600000); const horarioFim = new Date(horarioInicio.getTime() + 3600000)
+  const criarPalestra = (titulo: string, trilhaNome: string) => post('/api/v1/palestras', { eventoId: evento.id, trilhaId: detalhe.trilhas.find(t => t.trilhaNome === trilhaNome)!.id, palestraTitulo: titulo, palestraInicio: horarioInicio.toISOString(), palestraFim: horarioFim.toISOString(), palestrantes: [{ pessoaId: pessoa.id, palestrantePapel: 'Principal' }] })
+  await criarPalestra(`Monolito Modular ${sufixo}`, 'Arquitetura')
+  await criarPalestra(`PostgreSQL em Escala ${sufixo}`, 'Dados')
+
+  await page.goto(`/eventos/${evento.id}`)
+  await page.getByRole('link', { name: 'Ver grade' }).click()
+  await expect(page).toHaveURL(new RegExp(`/eventos/${evento.id}/grade$`))
+  await expect(page.getByRole('heading', { name: `Grade de Evento Grade ${sufixo}` })).toBeVisible()
+  await expect(page.getByRole('columnheader', { name: 'Arquitetura' })).toBeVisible()
+  await expect(page.getByRole('columnheader', { name: 'Dados' })).toBeVisible()
+  await expect(page.getByText(`Monolito Modular ${sufixo}`)).toBeVisible()
+  await expect(page.getByText(`PostgreSQL em Escala ${sufixo}`)).toBeVisible()
+  await page.getByText(`Monolito Modular ${sufixo}`).click()
+  await expect(page.getByRole('heading', { name: `Monolito Modular ${sufixo}` })).toBeVisible()
+})
