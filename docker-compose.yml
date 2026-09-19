@@ -1,8 +1,8 @@
 # Sobe tudo com um comando: docker compose up --build
 # - postgres:   banco (um schema por módulo)
 # - otel:       Aspire Dashboard (recebe OTLP: logs, traces e métricas) -> http://localhost:18888
-# - api:        Host.Api (ASP.NET Core 10)                              -> http://localhost:8080/swagger
-# - front:      React + Vite (build estático servido por nginx, proxy /api -> api) -> http://localhost:5173
+# - api:        Host.Api (ASP.NET Core 10)                              -> http://localhost:5761/swagger
+# - front:      React + Vite (build estático servido por nginx, proxy /api -> api) -> http://localhost:5760
 name: gestao-eventos
 
 services:
@@ -49,13 +49,13 @@ services:
       Database__MigrateOnStartup: "true"
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-troque-esta-chave-em-producao-0123456789abcdef0123456789}
       Identidade__AdministradorInicial__Senha: ${ADMIN_SENHA:-Admin@123456}
-      Cors__AllowedOrigins__0: http://localhost:5173
-      Cors__AllowedOrigins__1: http://localhost:8080
+      Cors__AllowedOrigins__0: http://localhost:5760
+      Cors__AllowedOrigins__1: http://localhost:5761
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel:18889
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       # ApplicationInsights__ConnectionString: "InstrumentationKey=...;IngestionEndpoint=..."  # habilita Azure Monitor
     ports:
-      - "8080:8080"
+      - "5761:8080"
 
   front:
     build:
@@ -65,7 +65,7 @@ services:
     depends_on:
       - api
     ports:
-      - "${FRONT_PORT:-5173}:80"
+      - "5760:80"
 
 volumes:
   postgres-data:

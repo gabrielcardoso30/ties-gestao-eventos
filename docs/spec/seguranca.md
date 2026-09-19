@@ -56,7 +56,7 @@ Observações:
 
 ## 4. CORS
 
-`Cors:AllowedOrigins` (array; padrão `http://localhost:5173` e `http://localhost:8080`), qualquer header e método, e expõe `X-Correlation-Id` e `Location` para o front ler. Não usa credenciais de cookie (o token vai no header). Em produção, liste apenas as origens reais do front.
+`Cors:AllowedOrigins` (array; padrão `http://localhost:5760` e `http://localhost:5761`), qualquer header e método, e expõe `X-Correlation-Id` e `Location` para o front ler. Não usa credenciais de cookie (o token vai no header). Em produção, liste apenas as origens reais do front.
 
 ## 5. Cabeçalhos e transporte
 

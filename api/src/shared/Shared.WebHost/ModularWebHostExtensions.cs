@@ -185,7 +185,7 @@ public static class ModularWebHostExtensions
 
     private static void AdicionarCors(WebApplicationBuilder builder)
     {
-        var origens = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? ["http://localhost:5173"];
+        var origens = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? ["http://localhost:5760"];
         builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
             .WithOrigins(origens)
             .AllowAnyHeader()

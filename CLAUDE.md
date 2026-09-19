@@ -8,10 +8,10 @@ ASP.NET Core 10 + PostgreSQL (`api/`) e React + Vite + shadcn (`front/`). Docume
 ```bash
 docker compose up --build            # tudo: postgres, otel (Aspire Dashboard), api, front
 cd api && dotnet build                # compila a solução (GestaoEventos.slnx)
-cd api && dotnet run --project src/hosts/Host.Api   # http://localhost:5080/swagger (precisa do postgres do compose)
+cd api && dotnet run --project src/hosts/Host.Api   # http://localhost:5761/swagger (precisa do postgres do compose)
 cd api && dotnet test                 # unit + integration (Testcontainers) + functional (Reqnroll)
 cd api && dotnet ef migrations add <Nome> --project src/modules/Module.<X> --startup-project src/modules/Module.<X> --context <X>DbContext --output-dir Migrations
-cd front && npm run dev               # http://localhost:5173 (proxy /api -> http://localhost:5080)
+cd front && npm run dev               # http://localhost:5760 (proxy /api -> http://localhost:5761)
 ```
 
 ## Estrutura

@@ -251,4 +251,4 @@ Três projetos em `api/tests/`: `Tests.Unit` (xUnit + Shouldly + NSubstitute; re
 
 ## 8. Front
 
-Estrutura (convenção do `CLAUDE.md`; implementação em andamento): páginas em `front/src/modules/<modulo>/<use-case>/`, montadas somente com componentes genéricos de `front/src/shared/components/generic` sobre shadcn (`front/src/shared/components/ui`); tipos alinhados a `docs/contracts/v1/openapi.yaml`. Em dev, o Vite faz proxy de `/api` para `http://localhost:5080`; no compose, o nginx do container `front` faz proxy para o serviço `api`.
+Estrutura (convenção do `CLAUDE.md`; implementação em andamento): páginas em `front/src/modules/<modulo>/<use-case>/`, montadas somente com componentes genéricos de `front/src/shared/components/generic` sobre shadcn (`front/src/shared/components/ui`); tipos alinhados a `docs/contracts/v1/openapi.yaml`. Em dev, o Vite faz proxy de `/api` para `http://localhost:5761`; no compose, o nginx do container `front` faz proxy para o serviço `api`.

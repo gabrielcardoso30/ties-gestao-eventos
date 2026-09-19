@@ -22,9 +22,9 @@ O compose sobe, nesta ordem: `postgres` (healthcheck `pg_isready`), `otel` (Aspi
 Verifique:
 
 ```bash
-curl -s http://localhost:8080/health/ready          # {"status":"Healthy"...}
-open http://localhost:8080/swagger                  # API
-open http://localhost:5173                          # front
+curl -s http://localhost:5761/health/ready          # {"status":"Healthy"...}
+open http://localhost:5761/swagger                  # API
+open http://localhost:5760                          # front
 open http://localhost:18888                         # Aspire Dashboard (logs, traces, métricas)
 ```
 
@@ -42,11 +42,11 @@ docker compose up -d postgres otel
 cd api
 dotnet build                                   # compila GestaoEventos.slnx
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317   # opcional: telemetria no Aspire Dashboard
-dotnet run --project src/hosts/Host.Api        # http://localhost:5080/swagger, ambiente Development
+dotnet run --project src/hosts/Host.Api        # http://localhost:5761/swagger, ambiente Development
 
 cd ../front
 npm install
-npm run dev                                    # http://localhost:5173 com proxy /api -> http://localhost:5080
+npm run dev                                    # http://localhost:5760 com proxy /api -> http://localhost:5761
 ```
 
 Em `Development`, `appsettings.Development.json` define a chave JWT de desenvolvimento e a senha do administrador; a connection string padrão do `appsettings.json` aponta para `localhost:5432` (o postgres do compose). Para sobrescrever qualquer valor sem editar arquivos: variáveis de ambiente (`Jwt__SigningKey=...`) ou `dotnet user-secrets set "Jwt:SigningKey" "..." --project src/hosts/Host.Api`.

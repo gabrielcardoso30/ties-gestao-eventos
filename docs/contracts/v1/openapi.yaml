@@ -7,7 +7,7 @@ info:
     url: https://globalsys.com.br
   version: v1
 servers:
-  - url: http://localhost:8080/
+  - url: http://localhost:5761/
 paths:
   '/api/v1/auditoria/registros/{id}':
     get:

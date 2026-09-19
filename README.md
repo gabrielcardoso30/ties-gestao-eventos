@@ -74,18 +74,18 @@ docker compose up --build
 
 | Serviço | URL | Observação |
 |---|---|---|
-| API + Swagger | http://localhost:8080/swagger | `/` redireciona para o Swagger; OpenAPI em `/openapi/v1.json` e `/openapi/v1.yaml` |
-| Front | http://localhost:5173 | build estático servido por nginx, proxy `/api` → `api` |
+| API + Swagger | http://localhost:5761/swagger | `/` redireciona para o Swagger; OpenAPI em `/openapi/v1.json` e `/openapi/v1.yaml` |
+| Front | http://localhost:5760 | build estático servido por nginx, proxy `/api` → `api` |
 | Aspire Dashboard | http://localhost:18888 | logs, traces e métricas recebidos por OTLP (gRPC na porta 4317 do host) |
 | PostgreSQL | `localhost:5432` | banco `gestao_eventos`, usuário `gestao`, senha `gestao` (somente dev) |
-| Health | http://localhost:8080/health/live e `/health/ready` | `ready` verifica o PostgreSQL |
+| Health | http://localhost:5761/health/live e `/health/ready` | `ready` verifica o PostgreSQL |
 
 ### Desenvolvimento local (API e front fora do container)
 
 ```bash
 docker compose up postgres otel          # só as dependências
-cd api && dotnet run --project src/hosts/Host.Api   # http://localhost:5080/swagger (ASPNETCORE_ENVIRONMENT=Development)
-cd front && npm install && npm run dev  # http://localhost:5173 (proxy /api -> http://localhost:5080)
+cd api && dotnet run --project src/hosts/Host.Api   # http://localhost:5761/swagger (ASPNETCORE_ENVIRONMENT=Development)
+cd front && npm install && npm run dev  # http://localhost:5760 (proxy /api -> http://localhost:5761)
 cd api && dotnet test                    # unit + integration (Testcontainers) + functional (Reqnroll)
 ```
 
@@ -111,7 +111,7 @@ Obtenha o token em `POST /api/v1/identidade/sessoes` e use **Authorize** no Swag
 | `Jwt__SigningKey` | chave HS256, **mínimo 32 caracteres** (a API não sobe sem ela) | vazio em produção |
 | `Jwt__Issuer`, `Jwt__Audience`, `Jwt__ExpirationMinutes` | emissão/validação do JWT | `gestao-eventos`, `gestao-eventos`, `480` |
 | `Identidade__AdministradorInicial__Email/Nome/Senha` | seed do administrador | senha vazia em produção (não cria) |
-| `Cors__AllowedOrigins__0..n` | origens permitidas | `http://localhost:5173`, `http://localhost:8080` |
+| `Cors__AllowedOrigins__0..n` | origens permitidas | `http://localhost:5760`, `http://localhost:5761` |
 | `RateLimiting__PermitLimit`, `RateLimiting__WindowSeconds` | janela fixa por usuário/IP | `300` / `60` |
 | `Outbox__Enabled`, `Outbox__PollingIntervalMs`, `Outbox__BatchSize`, `Outbox__LockSeconds`, `Outbox__MaxAttempts` | processador do Outbox | `true`, `2000`, `50`, `60`, `10` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_PROTOCOL` | exportação OTLP (logs, traces, métricas) | não definido = não exporta |
@@ -154,7 +154,7 @@ docker-compose.yml                   # postgres, otel (Aspire Dashboard), api, f
 
 ## Roteiro de demonstração (10 minutos)
 
-Pré-requisito: `docker compose up --build` concluído; abra o Swagger (http://localhost:8080/swagger) e o Aspire Dashboard (http://localhost:18888) lado a lado. Dica: para conseguir emitir certificado ao vivo, crie o evento e a palestra com horários **já encerrados** (por exemplo, ontem), pois o certificado exige `palestraFim <= agora`.
+Pré-requisito: `docker compose up --build` concluído; abra o Swagger (http://localhost:5761/swagger) e o Aspire Dashboard (http://localhost:18888) lado a lado. Dica: para conseguir emitir certificado ao vivo, crie o evento e a palestra com horários **já encerrados** (por exemplo, ontem), pois o certificado exige `palestraFim <= agora`.
 
 | # | Tempo | O que mostrar | Endpoint / tela | Ponto da palestra |
 |---|---|---|---|---|

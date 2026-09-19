@@ -7,7 +7,7 @@ import { defineConfig, loadEnv } from 'vite'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   // Em desenvolvimento o Vite faz proxy de /api para a API local; em produção o nginx faz o mesmo papel.
-  const apiProxy = env.VITE_API_PROXY || 'http://localhost:5085'
+  const apiProxy = env.VITE_API_PROXY || 'http://localhost:5761'
 
   return {
     plugins: [react(), tailwindcss()],
@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 5173,
+      port: 5760,
       proxy: {
         '/api': {
           target: apiProxy,

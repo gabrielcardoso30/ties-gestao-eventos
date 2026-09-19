@@ -3,11 +3,11 @@
 # nomes/e-mails levam um sufixo aleatório quando SEED_SUFIXO não é informado).
 #
 # Uso:  ./scripts/demo-seed.sh [API_URL] [EMAIL] [SENHA]
-#   API_URL padrão: http://localhost:8080   (docker compose)  | dev local: http://localhost:5080
+#   API_URL padrão: http://localhost:5761   (docker compose e desenvolvimento local)
 #   Credenciais padrão: administrador inicial (admin@gestaoeventos.local / Admin@123456)
 set -euo pipefail
 
-API="${1:-${API_URL:-http://localhost:8080}}"
+API="${1:-${API_URL:-http://localhost:5761}}"
 EMAIL="${2:-admin@gestaoeventos.local}"
 SENHA="${3:-Admin@123456}"
 SUFIXO="${SEED_SUFIXO:-$(date +%H%M%S)}"
@@ -84,4 +84,4 @@ curl -fsS "$API/api/v1/palestras/certificados/$CODIGO" | jq -c .
 say "Auditoria (últimos registros)"
 curl -fsS "$API/api/v1/auditoria/registros?tamanhoPagina=5" -H "Authorization: Bearer $TOKEN" | jq -c '.itens[] | {modulo, entidadeNome, operacao, usuarioNome}'
 
-say "Pronto. Evento: $API/swagger | Front: http://localhost:5173/eventos/$EVENTO_ID | Certificado público: http://localhost:5173/certificados/$CODIGO"
+say "Pronto. Evento: $API/swagger | Front: http://localhost:5760/eventos/$EVENTO_ID | Certificado público: http://localhost:5760/certificados/$CODIGO"

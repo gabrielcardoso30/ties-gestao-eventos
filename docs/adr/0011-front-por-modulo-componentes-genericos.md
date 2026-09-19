@@ -11,7 +11,7 @@ O front (React + Vite + shadcn) precisa espelhar a organização do backend para
 - Estrutura `front/src/modules/<modulo>/<use-case>/` (ex.: `modules/locais/criar-local/`), uma página por caso de uso, alinhada às pastas `UseCases/` do backend.
 - Componentes shadcn em `front/src/shared/components/ui`; **componentes genéricos** do projeto em `front/src/shared/components/generic` (listagem paginada, formulário, campos, diálogo de confirmação, badges de situação, exibição de ProblemDetails etc.). Páginas não usam elementos brutos nem shadcn diretamente; compõem os genéricos.
 - Tipos TypeScript derivados de `docs/contracts/v1/openapi.yaml` (equivalente ao `/openapi/v1.yaml` gerado pela API), em camelCase, seguindo a regra `entidadeAtributo`.
-- Comunicação com a API via `/api` (proxy do Vite em dev para `http://localhost:5080`; nginx no container para o serviço `api`), token JWT no header, `X-Correlation-Id` gerado por ação do usuário, e tratamento centralizado de ProblemDetails por `codigo`.
+- Comunicação com a API via `/api` (proxy do Vite em dev para `http://localhost:5761`; nginx no container para o serviço `api`), token JWT no header, `X-Correlation-Id` gerado por ação do usuário, e tratamento centralizado de ProblemDetails por `codigo`.
 
 ## Consequências
 
