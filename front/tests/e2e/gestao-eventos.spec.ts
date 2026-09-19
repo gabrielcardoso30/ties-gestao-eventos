@@ -257,3 +257,24 @@ test('Locais: usuário adiciona, edita e exclui uma sala', async ({ page, reques
   await expect(page.getByText('Sala Azul Atualizada')).toHaveCount(0)
   await expect(page.getByText('Salas (1)')).toBeVisible()
 })
+
+test('Eventos: dropdown permite selecionar e trocar o local cadastrado', async ({ page, request }) => {
+  const sufixo = Date.now(); const sessao = JSON.parse(sessaoAdministrador) as { accessToken: string }; const headers = { Authorization: `Bearer ${sessao.accessToken}` }
+  const criarLocal = async (numero: number) => { const r = await request.post('/api/v1/locais', { headers, data: { localNome: `Local Evento ${numero} ${sufixo}`, enderecoCidade: 'Vila Velha', enderecoUf: 'ES', capacidadeAmbienteUnico: 100 } }); expect(r.status()).toBe(201); return r.json() as Promise<{ id: string }> }
+  const [local1, local2] = await Promise.all([criarLocal(1), criarLocal(2)])
+  const inicio = new Date(Date.now() + 7 * 86400000); const fim = new Date(inicio.getTime() + 3 * 3600000)
+  const valorData = (data: Date) => new Date(data.getTime() - data.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+  const nome = `Evento com Local ${sufixo}`
+  await page.goto('/eventos/novo')
+  await page.getByLabel('Nome do evento *').fill(nome)
+  await page.getByLabel('Formato *').selectOption('Presencial')
+  await page.getByLabel('Local (presencial/híbrido)').selectOption(local1.id)
+  await page.getByLabel('Início *').fill(valorData(inicio)); await page.getByLabel('Fim *').fill(valorData(fim))
+  await page.getByRole('button', { name: 'Salvar' }).click()
+  await expect(page.getByText(`Local Evento 1 ${sufixo}`)).toBeVisible()
+  await page.getByRole('link', { name: 'Editar' }).click()
+  await expect(page.getByLabel('Local (presencial/híbrido)')).toHaveValue(local1.id)
+  await page.getByLabel('Local (presencial/híbrido)').selectOption(local2.id)
+  await page.getByRole('button', { name: 'Salvar' }).click()
+  await expect(page.getByText(`Local Evento 2 ${sufixo}`)).toBeVisible()
+})
