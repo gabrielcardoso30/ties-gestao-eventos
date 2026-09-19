@@ -1,0 +1,27 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Loader2, Pencil, Plus, Save, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { api } from '@/shared/api/http'
+import type { ObterEventoTrilhaResponse } from '@/shared/api/types'
+import { ConfirmDialog } from '@/shared/components/generic/ConfirmDialog'
+import { DetailCard } from '@/shared/components/generic/DescriptionList'
+import { ErrorState } from '@/shared/components/generic/ErrorState'
+import { Button } from '@/shared/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
+import { Input } from '@/shared/components/ui/input'
+import { Label } from '@/shared/components/ui/label'
+import { Switch } from '@/shared/components/ui/switch'
+import { Textarea } from '@/shared/components/ui/textarea'
+
+type FormTrilha = { trilhaNome: string; trilhaDescricao: string; trilhaCor: string; estaAtivo: boolean }
+const vazio: FormTrilha = { trilhaNome: '', trilhaDescricao: '', trilhaCor: '#2563EB', estaAtivo: true }
+
+export function TrilhasManager({ eventoId, trilhas }: { eventoId: string; trilhas: ObterEventoTrilhaResponse[] }) {
+  const client = useQueryClient(); const [aberto, setAberto] = useState(false); const [edicao, setEdicao] = useState<ObterEventoTrilhaResponse>(); const [form, setForm] = useState(vazio); const [excluir, setExcluir] = useState<ObterEventoTrilhaResponse>()
+  const invalidar = () => client.invalidateQueries({ queryKey: ['eventos'] })
+  const salvar = useMutation({ mutationFn: () => edicao ? api.put(`/eventos/${eventoId}/trilhas/${edicao.id}`, form) : api.post(`/eventos/${eventoId}/trilhas`, { trilhaNome: form.trilhaNome, trilhaDescricao: form.trilhaDescricao || null, trilhaCor: form.trilhaCor || null }), onSuccess: async () => { await invalidar(); setAberto(false); setEdicao(undefined); setForm(vazio) } })
+  const remover = useMutation({ mutationFn: () => api.delete(`/eventos/${eventoId}/trilhas/${excluir!.id}`), onSuccess: async () => { await invalidar(); setExcluir(undefined) } })
+  const editar = (t: ObterEventoTrilhaResponse) => { setEdicao(t); setForm({ trilhaNome: t.trilhaNome, trilhaDescricao: t.trilhaDescricao ?? '', trilhaCor: t.trilhaCor ?? '#2563EB', estaAtivo: t.estaAtivo }); setAberto(true) }
+  const mudar = <K extends keyof FormTrilha>(campo: K, valor: FormTrilha[K]) => setForm(f => ({ ...f, [campo]: valor }))
+  return <><DetailCard titulo={`Trilhas (${trilhas.length})`} descricao="Temas que organizam a programação e orientam a escolha dos participantes." acoes={<Button size="sm" onClick={() => { setEdicao(undefined); setForm(vazio); setAberto(true) }}><Plus /> Nova trilha</Button>}><div className="divide-y">{trilhas.map(t => <div key={t.id} className="flex items-center justify-between gap-3 py-3"><div className="flex items-start gap-3"><span className="mt-1 size-4 rounded-full border" style={{ backgroundColor: t.trilhaCor ?? '#64748B' }} /><div><div className="flex gap-2"><strong>{t.trilhaNome}</strong>{!t.estaAtivo && <span className="rounded bg-muted px-2 py-0.5 text-xs">Inativa</span>}</div>{t.trilhaDescricao && <p className="text-sm text-muted-foreground">{t.trilhaDescricao}</p>}</div></div><div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => editar(t)}><Pencil /> Editar</Button><Button size="sm" variant="ghost" className="text-destructive" onClick={() => setExcluir(t)}><Trash2 /> Excluir</Button></div></div>)}</div></DetailCard><Dialog open={aberto} onOpenChange={setAberto}><DialogContent><DialogHeader><DialogTitle>{edicao ? 'Editar trilha' : 'Nova trilha'}</DialogTitle><DialogDescription>Identifique o assunto que agrupa as palestras desta trilha.</DialogDescription></DialogHeader><form className="grid gap-4 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); salvar.mutate() }}><div><Label htmlFor="trilhaNome" className="mb-2">Nome *</Label><Input id="trilhaNome" value={form.trilhaNome} onChange={e => mudar('trilhaNome', e.target.value)} required /></div><div><Label htmlFor="trilhaCor" className="mb-2">Cor</Label><Input id="trilhaCor" type="color" value={form.trilhaCor} onChange={e => mudar('trilhaCor', e.target.value)} /></div><div className="sm:col-span-2"><Label htmlFor="trilhaDescricao" className="mb-2">Descrição</Label><Textarea id="trilhaDescricao" value={form.trilhaDescricao} onChange={e => mudar('trilhaDescricao', e.target.value)} /></div>{edicao && <div className="flex items-center gap-3 sm:col-span-2"><Switch id="trilhaAtiva" checked={form.estaAtivo} onCheckedChange={v => mudar('estaAtivo', v)} /><Label htmlFor="trilhaAtiva">Trilha ativa para novas palestras</Label></div>}{salvar.error && <div className="sm:col-span-2"><ErrorState erro={salvar.error} compacto /></div>}<DialogFooter className="sm:col-span-2"><Button type="button" variant="outline" onClick={() => setAberto(false)}>Cancelar</Button><Button type="submit" disabled={salvar.isPending}>{salvar.isPending ? <Loader2 className="animate-spin" /> : <Save />} Salvar trilha</Button></DialogFooter></form></DialogContent></Dialog><ConfirmDialog open={Boolean(excluir)} onOpenChange={v => !v && setExcluir(undefined)} titulo="Excluir trilha?" descricao="A trilha será excluída logicamente. O evento precisa manter ao menos uma trilha." confirmarLabel="Excluir trilha" variante="destructive" isPending={remover.isPending} erro={remover.error} onConfirmar={() => remover.mutate()} /></>
+}

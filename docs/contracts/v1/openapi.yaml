@@ -7,7 +7,7 @@ info:
     url: https://globalsys.com.br
   version: v1
 servers:
-  - url: http://localhost:5761/
+  - url: http://127.0.0.1:5762/
 paths:
   '/api/v1/auditoria/registros/{id}':
     get:
@@ -305,6 +305,129 @@ paths:
                 $ref: '#/components/schemas/ProblemDetails'
       security:
         - Bearer: [ ]
+  '/api/v1/eventos/{id}/trilhas':
+    get:
+      tags:
+        - Eventos
+      summary: Lista as trilhas de um evento
+      description: Retorna as trilhas temáticas ordenadas por nome; use `estaAtivo=true` para seleção em palestras.
+      operationId: ListarTrilhas
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: EstaAtivo
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ListarTrilhasItemResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    post:
+      tags:
+        - Eventos
+      summary: Adiciona uma trilha temática ao evento
+      description: O nome da trilha é único no evento. **Perfil exigido:** Administrador ou Organizador.
+      operationId: AdicionarTrilha
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdicionarTrilhaRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdicionarTrilhaResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
   '/api/v1/eventos/{id}/inscricoes':
     get:
       tags:
@@ -576,6 +699,131 @@ paths:
                 $ref: '#/components/schemas/CriarEventoResponse'
         '422':
           description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+  '/api/v1/eventos/{id}/trilhas/{trilhaId}':
+    delete:
+      tags:
+        - Eventos
+      summary: Exclui logicamente uma trilha
+      description: O evento deve manter ao menos uma trilha. **Perfil exigido:** Administrador ou Organizador.
+      operationId: ExcluirTrilha
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: trilhaId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: [ ]
+    put:
+      tags:
+        - Eventos
+      summary: Atualiza uma trilha do evento
+      description: Atualiza identificação e disponibilidade da trilha. **Perfil exigido:** Administrador ou Organizador.
+      operationId: AtualizarTrilha
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: trilhaId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarTrilhaRequest'
+        required: true
+      responses:
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpValidationProblemDetails'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AtualizarTrilhaResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflict
           content:
             application/problem+json:
               schema:
@@ -2641,6 +2889,48 @@ components:
           format: int32
         salaTipo:
           $ref: '#/components/schemas/SalaTipo'
+    AdicionarTrilhaRequest:
+      required:
+        - trilhaNome
+        - trilhaDescricao
+        - trilhaCor
+      type: object
+      properties:
+        trilhaNome:
+          type: string
+        trilhaDescricao:
+          type:
+            - 'null'
+            - string
+        trilhaCor:
+          type:
+            - 'null'
+            - string
+    AdicionarTrilhaResponse:
+      required:
+        - id
+        - eventoId
+        - trilhaNome
+        - trilhaDescricao
+        - trilhaCor
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoId:
+          type: string
+          format: uuid
+        trilhaNome:
+          type: string
+        trilhaDescricao:
+          type:
+            - 'null'
+            - string
+        trilhaCor:
+          type:
+            - 'null'
+            - string
     AlterarSituacaoEventoRequest:
       required:
         - eventoSituacao
@@ -2783,6 +3073,7 @@ components:
           format: date-time
     AtualizarPalestraRequest:
       required:
+        - trilhaId
         - salaId
         - palestraTitulo
         - palestraDescricao
@@ -2790,6 +3081,9 @@ components:
         - palestraFim
       type: object
       properties:
+        trilhaId:
+          type: string
+          format: uuid
         salaId:
           type:
             - 'null'
@@ -2965,6 +3259,54 @@ components:
           $ref: '#/components/schemas/SalaTipo'
         estaAtivo:
           type: boolean
+    AtualizarTrilhaRequest:
+      required:
+        - trilhaNome
+        - trilhaDescricao
+        - trilhaCor
+        - estaAtivo
+      type: object
+      properties:
+        trilhaNome:
+          type: string
+        trilhaDescricao:
+          type:
+            - 'null'
+            - string
+        trilhaCor:
+          type:
+            - 'null'
+            - string
+        estaAtivo:
+          type: boolean
+    AtualizarTrilhaResponse:
+      required:
+        - id
+        - eventoId
+        - trilhaNome
+        - trilhaDescricao
+        - trilhaCor
+        - estaAtivo
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoId:
+          type: string
+          format: uuid
+        trilhaNome:
+          type: string
+        trilhaDescricao:
+          type:
+            - 'null'
+            - string
+        trilhaCor:
+          type:
+            - 'null'
+            - string
+        estaAtivo:
+          type: boolean
     ConteudoTipo:
       enum:
         - Slides
@@ -3015,6 +3357,12 @@ components:
             - integer
             - string
           format: int32
+        trilhas:
+          type:
+            - 'null'
+            - array
+          items:
+            $ref: '#/components/schemas/CriarEventoTrilhaRequest'
     CriarEventoResponse:
       required:
         - id
@@ -3029,6 +3377,23 @@ components:
           type: string
         eventoSituacao:
           $ref: '#/components/schemas/EventoSituacao'
+    CriarEventoTrilhaRequest:
+      required:
+        - trilhaNome
+        - trilhaDescricao
+        - trilhaCor
+      type: object
+      properties:
+        trilhaNome:
+          type: string
+        trilhaDescricao:
+          type:
+            - 'null'
+            - string
+        trilhaCor:
+          type:
+            - 'null'
+            - string
     CriarLocalRequest:
       required:
         - localNome
@@ -3107,6 +3472,7 @@ components:
     CriarPalestraRequest:
       required:
         - eventoId
+        - trilhaId
         - salaId
         - palestraTitulo
         - palestraDescricao
@@ -3116,6 +3482,9 @@ components:
       type: object
       properties:
         eventoId:
+          type: string
+          format: uuid
+        trilhaId:
           type: string
           format: uuid
         salaId:
@@ -3475,6 +3844,7 @@ components:
       required:
         - id
         - eventoId
+        - trilhaId
         - salaId
         - palestraTitulo
         - palestraInicio
@@ -3487,6 +3857,9 @@ components:
           type: string
           format: uuid
         eventoId:
+          type: string
+          format: uuid
+        trilhaId:
           type: string
           format: uuid
         salaId:
@@ -3626,6 +3999,34 @@ components:
             - string
         estaAtivo:
           type: boolean
+    ListarTrilhasItemResponse:
+      required:
+        - id
+        - eventoId
+        - trilhaNome
+        - trilhaDescricao
+        - trilhaCor
+        - estaAtivo
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventoId:
+          type: string
+          format: uuid
+        trilhaNome:
+          type: string
+        trilhaDescricao:
+          type:
+            - 'null'
+            - string
+        trilhaCor:
+          type:
+            - 'null'
+            - string
+        estaAtivo:
+          type: boolean
     ListarUsuariosItemResponse:
       required:
         - id
@@ -3671,6 +4072,7 @@ components:
         - eventoCancelamentoMotivo
         - criadoEm
         - alteradoEm
+        - trilhas
       type: object
       properties:
         id:
@@ -3730,6 +4132,34 @@ components:
             - 'null'
             - string
           format: date-time
+        trilhas:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObterEventoTrilhaResponse'
+    ObterEventoTrilhaResponse:
+      required:
+        - id
+        - trilhaNome
+        - trilhaDescricao
+        - trilhaCor
+        - estaAtivo
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        trilhaNome:
+          type: string
+        trilhaDescricao:
+          type:
+            - 'null'
+            - string
+        trilhaCor:
+          type:
+            - 'null'
+            - string
+        estaAtivo:
+          type: boolean
     ObterLocalResponse:
       required:
         - id
@@ -3867,6 +4297,8 @@ components:
         - id
         - eventoId
         - eventoNome
+        - trilhaId
+        - trilhaNome
         - salaId
         - salaNome
         - palestraTitulo
@@ -3889,6 +4321,11 @@ components:
           type: string
           format: uuid
         eventoNome:
+          type: string
+        trilhaId:
+          type: string
+          format: uuid
+        trilhaNome:
           type: string
         salaId:
           type:

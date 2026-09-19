@@ -16,7 +16,7 @@ import { Textarea } from '@/shared/components/ui/textarea'
 export interface EntityFormField {
   name: string
   label: string
-  type?: 'text' | 'email' | 'password' | 'number' | 'datetime-local' | 'url' | 'textarea' | 'select' | 'checkbox'
+  type?: 'text' | 'email' | 'password' | 'number' | 'datetime-local' | 'url' | 'color' | 'textarea' | 'select' | 'checkbox'
   required?: boolean
   placeholder?: string
   options?: Array<{ value: string; label: string }>

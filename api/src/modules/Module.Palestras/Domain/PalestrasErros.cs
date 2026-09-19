@@ -11,6 +11,7 @@ public static class PalestrasErros
     public static readonly Error SalaNaoEncontrada = Error.BusinessRule("Palestras.SalaNaoEncontrada", "A sala informada não existe ou está inativa.");
     public static readonly Error SalaNaoPertenceAoLocal = Error.BusinessRule("Palestras.SalaNaoPertenceAoLocal", "A sala informada não pertence ao local do evento.");
     public static readonly Error SalaOcupada = Error.Conflict("Palestras.SalaOcupada", "Já existe outra palestra nesta sala no horário informado.");
+    public static readonly Error TrilhaNaoEncontrada = Error.BusinessRule("Palestras.TrilhaNaoEncontrada", "A trilha informada não pertence ao evento ou está inativa.");
     public static readonly Error PessoaNaoEncontrada = Error.BusinessRule("Palestras.PessoaNaoEncontrada", "Uma ou mais pessoas informadas como palestrantes não existem.");
     public static readonly Error PalestranteJaVinculado = Error.Conflict("Palestras.PalestranteJaVinculado", "Esta pessoa já é palestrante desta palestra.");
     public static readonly Error PalestranteNaoEncontrado = Error.NotFound("Palestras.PalestranteNaoEncontrado", "Palestrante não encontrado nesta palestra.");

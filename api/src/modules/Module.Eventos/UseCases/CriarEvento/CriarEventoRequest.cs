@@ -11,4 +11,7 @@ public sealed record CriarEventoRequest(
     EventoFormato EventoFormato,
     Guid? LocalId,
     string? EventoLinkRemoto,
-    int? EventoCapacidadeMaxima);
+    int? EventoCapacidadeMaxima,
+    IReadOnlyList<CriarEventoTrilhaRequest>? Trilhas = null);
+
+public sealed record CriarEventoTrilhaRequest(string TrilhaNome, string? TrilhaDescricao, string? TrilhaCor);

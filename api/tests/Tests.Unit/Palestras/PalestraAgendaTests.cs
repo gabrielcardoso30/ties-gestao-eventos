@@ -32,7 +32,7 @@ public class PalestraAgendaTests
     public void OcupaSala_deve_considerar_sala_periodo_e_ignorar_a_propria_palestra()
     {
         var sala = Guid.NewGuid();
-        var existente = Palestra.Criar(Guid.NewGuid(), sala, "Existente", null, T0, T0.AddMinutes(60), [new NovoPalestrante(Guid.NewGuid(), PalestrantePapel.Principal)]).Value;
+        var existente = Palestra.Criar(Guid.NewGuid(), Guid.NewGuid(), sala, "Existente", null, T0, T0.AddMinutes(60), [new NovoPalestrante(Guid.NewGuid(), PalestrantePapel.Principal)]).Value;
 
         PalestraAgenda.OcupaSala(sala, T0.AddMinutes(30), T0.AddMinutes(90)).Compile()(existente).ShouldBeTrue();
         PalestraAgenda.OcupaSala(sala, T0.AddMinutes(60), T0.AddMinutes(90)).Compile()(existente).ShouldBeFalse();

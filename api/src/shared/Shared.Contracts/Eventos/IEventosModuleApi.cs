@@ -7,6 +7,7 @@ public interface IEventosModuleApi
 {
     Task<EventoResumo?> ObterEventoResumoAsync(Guid eventoId, CancellationToken cancellationToken);
     Task<bool> InscricaoConfirmadaExisteAsync(Guid eventoId, Guid pessoaId, CancellationToken cancellationToken);
+    Task<TrilhaResumo?> ObterTrilhaResumoAsync(Guid eventoId, Guid trilhaId, CancellationToken cancellationToken);
 }
 
 public sealed record EventoResumo(
@@ -17,6 +18,8 @@ public sealed record EventoResumo(
     string EventoFormato,
     string EventoSituacao,
     Guid? LocalId);
+
+public sealed record TrilhaResumo(Guid Id, Guid EventoId, string TrilhaNome, bool EstaAtivo);
 
 public sealed record EventoPublicado(Guid EventoId, string EventoNome, DateTimeOffset EventoDataInicio) : IntegrationEvent;
 public sealed record EventoCancelado(Guid EventoId, string EventoNome, string Motivo) : IntegrationEvent;

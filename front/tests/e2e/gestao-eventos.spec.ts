@@ -38,7 +38,7 @@ test('CRUD de pessoa: cria, consulta, edita e exclui logicamente', async ({ page
   await page.getByLabel('Nome *').fill(nomeAlterado)
   await page.getByRole('button', { name: 'Salvar' }).click()
   await expect(page.getByRole('heading', { name: nomeAlterado })).toBeVisible()
-  await page.getByRole('button', { name: 'Excluir' }).click()
+  await page.getByRole('button', { name: 'Excluir' }).first().click()
   await page.getByRole('button', { name: 'Excluir' }).last().click()
   await expect(page.getByRole('heading', { name: 'Pessoas' })).toBeVisible()
   await expect(page.getByText(nomeAlterado)).toHaveCount(0)
@@ -113,7 +113,7 @@ test('CRUD de evento remoto preserva formato e situação inicial', async ({ pag
   await expect(page.getByRole('heading', { name: nome })).toBeVisible()
   await expect(page.getByText('Rascunho')).toBeVisible()
   await expect(page.getByText('Remoto', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Excluir' }).click()
+  await page.getByRole('button', { name: 'Excluir' }).first().click()
   await page.getByRole('button', { name: 'Excluir' }).last().click()
   await expect(page.getByRole('heading', { name: 'Eventos' })).toBeVisible()
 })
@@ -200,11 +200,13 @@ test('Palestras: dropdowns relacionam evento, sala e múltiplos palestrantes na 
   const [pessoa1, pessoa2, pessoa3] = await Promise.all([criarPessoa(1), criarPessoa(2), criarPessoa(3)])
   const inicioEvento = new Date(Date.now() + 5 * 86400000); const fimEvento = new Date(inicioEvento.getTime() + 8 * 3600000)
   const evento = await post('/api/v1/eventos', { eventoNome: `Evento Relações ${sufixo}`, eventoDataInicio: inicioEvento.toISOString(), eventoDataFim: fimEvento.toISOString(), eventoFormato: 'Presencial', localId: local.id }) as { id: string }
+  const eventoDetalhe = await (await request.get(`/api/v1/eventos/${evento.id}`, { headers })).json() as { trilhas: Array<{ id: string }> }
   const valorData = (data: Date) => new Date(data.getTime() - data.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 
   await page.goto('/palestras/nova')
   await page.getByLabel('Título').fill(`Palestra Relações ${sufixo}`)
   await page.getByLabel('Evento', { exact: true }).selectOption(evento.id)
+  await page.getByLabel('Trilha').selectOption(eventoDetalhe.trilhas[0].id)
   await expect(page.getByLabel('Local do evento')).toHaveValue(local.id)
   await page.getByLabel('Sala').selectOption(localDetalhe.salas[0].id)
   await page.getByLabel('Início').fill(valorData(new Date(inicioEvento.getTime() + 3600000)))
@@ -277,4 +279,23 @@ test('Eventos: dropdown permite selecionar e trocar o local cadastrado', async (
   await page.getByLabel('Local (presencial/híbrido)').selectOption(local2.id)
   await page.getByRole('button', { name: 'Salvar' }).click()
   await expect(page.getByText(`Local Evento 2 ${sufixo}`)).toBeVisible()
+})
+
+test('Eventos e Palestras: usuário gerencia trilhas e seleciona a trilha da palestra', async ({ page, request }) => {
+  const sufixo = Date.now(); const sessao = JSON.parse(sessaoAdministrador) as { accessToken: string }; const headers = { Authorization: `Bearer ${sessao.accessToken}` }
+  const inicio = new Date(Date.now() + 9 * 86400000); const fim = new Date(inicio.getTime() + 4 * 3600000)
+  const resposta = await request.post('/api/v1/eventos', { headers, data: { eventoNome: `Evento Trilhas ${sufixo}`, eventoDataInicio: inicio.toISOString(), eventoDataFim: fim.toISOString(), eventoFormato: 'Remoto', eventoLinkRemoto: 'https://evento.test', trilhas: [{ trilhaNome: 'Arquitetura', trilhaCor: '#112233' }] } })
+  expect(resposta.status()).toBe(201); const evento = await resposta.json() as { id: string }
+  await page.goto(`/eventos/${evento.id}`)
+  await expect(page.getByText('Trilhas (1)')).toBeVisible()
+  await page.getByRole('button', { name: 'Nova trilha' }).click()
+  await page.getByLabel('Nome *').fill('Cloud')
+  await page.getByLabel('Descrição').fill('Nuvem e plataforma')
+  await page.getByRole('button', { name: 'Salvar trilha' }).click()
+  await expect(page.getByText('Trilhas (2)')).toBeVisible(); await expect(page.getByText('Cloud', { exact: true })).toBeVisible()
+  const cloud = page.locator('div.divide-y > div').filter({ hasText: 'Cloud' }); await cloud.getByRole('button', { name: 'Editar' }).click()
+  await page.getByLabel('Nome *').fill('Cloud Native'); await page.getByRole('button', { name: 'Salvar trilha' }).click()
+  await expect(page.getByText('Cloud Native', { exact: true })).toBeVisible()
+  await page.goto('/palestras/nova'); await page.getByLabel('Evento', { exact: true }).selectOption(evento.id)
+  await expect(page.getByLabel('Trilha')).toContainText('Arquitetura'); await expect(page.getByLabel('Trilha')).toContainText('Cloud Native')
 })

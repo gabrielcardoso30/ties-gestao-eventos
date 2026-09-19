@@ -18,4 +18,7 @@ public static class EventosErros
     public static readonly Error CapacidadeEsgotada = Error.BusinessRule("Eventos.CapacidadeEsgotada", "A capacidade do evento foi atingida.");
     public static readonly Error InscricaoNaoEncontrada = Error.NotFound("Eventos.InscricaoNaoEncontrada", "Inscrição não encontrada neste evento.");
     public static readonly Error InscricaoJaCancelada = Error.BusinessRule("Eventos.InscricaoJaCancelada", "A inscrição já está cancelada.");
+    public static readonly Error TrilhaNaoEncontrada = Error.NotFound("Eventos.TrilhaNaoEncontrada", "Trilha não encontrada neste evento.");
+    public static readonly Error TrilhaNomeDuplicado = Error.Conflict("Eventos.TrilhaNomeDuplicado", "Já existe uma trilha com este nome no evento.");
+    public static readonly Error EventoPrecisaDeUmaTrilha = Error.BusinessRule("Eventos.EventoPrecisaDeUmaTrilha", "O evento precisa manter ao menos uma trilha.");
 }

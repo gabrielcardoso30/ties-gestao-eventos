@@ -20,7 +20,7 @@ internal sealed class AtualizarPalestraUseCase(PalestrasDbContext db, AgendaPale
             return PalestrasErros.PalestraNaoEncontrada;
         }
 
-        var verificacao = await agenda.VerificarAsync(palestra.EventoId, request.SalaId, request.PalestraInicio, request.PalestraFim, cancellationToken);
+        var verificacao = await agenda.VerificarAsync(palestra.EventoId, request.TrilhaId, request.SalaId, request.PalestraInicio, request.PalestraFim, cancellationToken);
         if (verificacao.IsFailure)
         {
             return verificacao.Error;
@@ -37,7 +37,7 @@ internal sealed class AtualizarPalestraUseCase(PalestrasDbContext db, AgendaPale
             }
         }
 
-        palestra.Atualizar(request.SalaId, request.PalestraTitulo, request.PalestraDescricao, request.PalestraInicio, request.PalestraFim);
+        palestra.Atualizar(request.TrilhaId, request.SalaId, request.PalestraTitulo, request.PalestraDescricao, request.PalestraInicio, request.PalestraFim);
 
         return await db.ExecuteInTransactionAsync(async ct =>
         {

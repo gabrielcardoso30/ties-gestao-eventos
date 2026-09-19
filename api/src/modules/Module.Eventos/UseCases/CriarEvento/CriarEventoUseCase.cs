@@ -29,6 +29,14 @@ internal sealed class CriarEventoUseCase(EventosDbContext db, ILocaisModuleApi l
         }
 
         var evento = resultado.Value;
+        var trilhas = request.Trilhas is { Count: > 0 }
+            ? request.Trilhas
+            : [new CriarEventoTrilhaRequest("Trilha única", null, "#2563EB")];
+        foreach (var item in trilhas)
+        {
+            var trilhaResultado = evento.AdicionarTrilha(item.TrilhaNome, item.TrilhaDescricao, item.TrilhaCor);
+            if (trilhaResultado.IsFailure) return trilhaResultado.Error;
+        }
         return await db.ExecuteInTransactionAsync(async ct =>
         {
             db.Eventos.Add(evento);

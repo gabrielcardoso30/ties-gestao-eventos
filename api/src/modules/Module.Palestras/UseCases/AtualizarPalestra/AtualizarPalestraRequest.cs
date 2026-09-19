@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 namespace Module.Palestras.UseCases.AtualizarPalestra;
 
 public sealed record AtualizarPalestraRequest(
+    Guid TrilhaId,
     Guid? SalaId,
     string PalestraTitulo,
     string? PalestraDescricao,

@@ -28,14 +28,21 @@ public sealed class CriarPalestraUseCaseTests : IDisposable
         .UseNpgsql("Host=localhost;Database=nao_conecta;Username=x;Password=x")
         .Options);
 
+    public CriarPalestraUseCaseTests()
+    {
+        _eventos.ObterTrilhaResumoAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(call => new TrilhaResumo(call.ArgAt<Guid>(1), call.ArgAt<Guid>(0), "Principal", true));
+    }
+
     private CriarPalestraUseCase CriarUseCase() => new(_db, new AgendaPalestraVerificador(_eventos, _locais), _pessoas);
 
     private static CriarPalestraRequest Request(Guid? salaId = null) => new(
-        Guid.NewGuid(), salaId, "Monolito modular", null, EventoInicio.AddHours(1), EventoInicio.AddHours(2),
+        Guid.NewGuid(), Guid.NewGuid(), salaId, "Monolito modular", null, EventoInicio.AddHours(1), EventoInicio.AddHours(2),
         [new CriarPalestraPalestranteRequest(Guid.NewGuid(), PalestrantePapel.Principal)]);
 
     private static EventoResumo Evento(Guid id, string situacao = "Publicado", Guid? localId = null) =>
         new(id, "Evento Teste", EventoInicio, EventoFim, "Presencial", situacao, localId ?? LocalId);
+
 
     [Fact]
     public async Task Evento_inexistente_deve_retornar_422_EventoNaoEncontrado()

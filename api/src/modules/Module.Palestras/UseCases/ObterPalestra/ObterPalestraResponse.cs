@@ -6,6 +6,8 @@ public sealed record ObterPalestraResponse(
     Guid Id,
     Guid EventoId,
     string EventoNome,
+    Guid TrilhaId,
+    string TrilhaNome,
     Guid? SalaId,
     string? SalaNome,
     string PalestraTitulo,

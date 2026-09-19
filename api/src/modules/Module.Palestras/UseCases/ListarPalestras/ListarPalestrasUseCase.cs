@@ -27,7 +27,7 @@ internal sealed class ListarPalestrasUseCase(PalestrasDbContext db) : IUseCase<L
         var pagina = await query
             .OrderBy(p => p.PalestraInicio).ThenBy(p => p.PalestraTitulo)
             .Select(p => new ListarPalestrasItemResponse(
-                p.Id, p.EventoId, p.SalaId, p.PalestraTitulo, p.PalestraInicio, p.PalestraFim, p.Palestrantes.Count, p.Presencas.Count))
+                p.Id, p.EventoId, p.TrilhaId, p.SalaId, p.PalestraTitulo, p.PalestraInicio, p.PalestraFim, p.Palestrantes.Count, p.Presencas.Count))
             .ToPagedResultAsync(new PagedRequest(request.Pagina, request.TamanhoPagina), cancellationToken);
 
         return pagina;

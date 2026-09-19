@@ -11,6 +11,7 @@ namespace Module.Eventos.Domain;
 public sealed class Evento : EntidadeBase
 {
     private readonly List<Inscricao> _inscricoes = [];
+    private readonly List<Trilha> _trilhas = [];
 
     private Evento()
     {
@@ -28,6 +29,35 @@ public sealed class Evento : EntidadeBase
     public string? EventoCancelamentoMotivo { get; private set; }
 
     public IReadOnlyCollection<Inscricao> Inscricoes => _inscricoes.AsReadOnly();
+    public IReadOnlyCollection<Trilha> Trilhas => _trilhas.AsReadOnly();
+
+    public Result<Trilha> AdicionarTrilha(string trilhaNome, string? trilhaDescricao, string? trilhaCor)
+    {
+        if (_trilhas.Any(t => t.ExcluidoEm is null && string.Equals(t.TrilhaNome, trilhaNome.Trim(), StringComparison.OrdinalIgnoreCase)))
+            return EventosErros.TrilhaNomeDuplicado;
+
+        var trilha = new Trilha(Id, trilhaNome, trilhaDescricao, trilhaCor);
+        _trilhas.Add(trilha);
+        return trilha;
+    }
+
+    public Result AtualizarTrilha(Guid trilhaId, string trilhaNome, string? trilhaDescricao, string? trilhaCor)
+    {
+        var trilha = _trilhas.FirstOrDefault(t => t.Id == trilhaId && t.ExcluidoEm is null);
+        if (trilha is null) return EventosErros.TrilhaNaoEncontrada;
+        if (_trilhas.Any(t => t.Id != trilhaId && t.ExcluidoEm is null && string.Equals(t.TrilhaNome, trilhaNome.Trim(), StringComparison.OrdinalIgnoreCase)))
+            return EventosErros.TrilhaNomeDuplicado;
+        trilha.Atualizar(trilhaNome, trilhaDescricao, trilhaCor);
+        return Result.Success();
+    }
+
+    public Result<Trilha> RemoverTrilha(Guid trilhaId)
+    {
+        var trilha = _trilhas.FirstOrDefault(t => t.Id == trilhaId && t.ExcluidoEm is null);
+        if (trilha is null) return EventosErros.TrilhaNaoEncontrada;
+        if (_trilhas.Count(t => t.ExcluidoEm is null) <= 1) return EventosErros.EventoPrecisaDeUmaTrilha;
+        return trilha;
+    }
 
     /// <summary>Evento nasce em <see cref="EventoSituacao.Rascunho"/>. Falha com <c>FormatoInconsistente</c> se local/link não combinam com o formato.</summary>
     public static Result<Evento> Criar(

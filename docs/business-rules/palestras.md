@@ -4,7 +4,7 @@ Módulo em implementação; fonte: [`../spec/api-endpoints.md`](../spec/api-endp
 
 ## Agregado
 
-**Palestra** (raiz): `EventoId`, `SalaId?`, `PalestraTitulo`, `PalestraDescricao?` (4000), `PalestraInicio`, `PalestraFim`, com coleções:
+**Palestra** (raiz): `EventoId`, `TrilhaId`, `SalaId?`, `PalestraTitulo`, `PalestraDescricao?` (4000), `PalestraInicio`, `PalestraFim`, com coleções:
 
 - **PalestraPalestrante**: `PalestraId`, `PessoaId`, `PalestrantePapel` (`Principal` | `Coautor` | `Mediador`); única `(PalestraId, PessoaId)` entre ativos.
 - **PalestraConteudo**: `PalestraId`, `ConteudoTitulo`, `ConteudoTipo` (`Slides` | `Pdf` | `Arquivo` | `Link` | `Video` | `Imagem`), `ConteudoUrl` (2000), `ConteudoDescricao?`.
@@ -29,6 +29,7 @@ Módulo em implementação; fonte: [`../spec/api-endpoints.md`](../spec/api-endp
 | RN-PAL-008 | Excluir palestra é lógico e cascateia logicamente para palestrantes e conteúdos; presenças e certificados permanecem. | — |
 | RN-PAL-009 | Criar emite `PalestraCriada`. | — |
 | RN-PAL-010 | Listagem ordenada por `PalestraInicio`, filtros `eventoId` e `busca`. | — |
+| RN-PAL-026 | Toda palestra pertence a uma trilha ativa do mesmo evento, tanto na criação quanto na alteração. | `422 Palestras.TrilhaNaoEncontrada` |
 
 ### Palestrantes
 

@@ -138,11 +138,16 @@ namespace Module.Palestras.Migrations
                     b.Property<Guid?>("SalaId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("TrilhaId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EventoId");
 
                     b.HasIndex("ExcluidoEm");
+
+                    b.HasIndex("TrilhaId");
 
                     b.HasIndex("SalaId", "PalestraInicio");
 

@@ -17,4 +17,7 @@ public sealed record ObterEventoResponse(
     int InscricoesConfirmadas,
     string? EventoCancelamentoMotivo,
     DateTimeOffset CriadoEm,
-    DateTimeOffset? AlteradoEm);
+    DateTimeOffset? AlteradoEm,
+    IReadOnlyList<ObterEventoTrilhaResponse> Trilhas);
+
+public sealed record ObterEventoTrilhaResponse(Guid Id, string TrilhaNome, string? TrilhaDescricao, string? TrilhaCor, bool EstaAtivo);

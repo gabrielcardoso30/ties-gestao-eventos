@@ -17,7 +17,7 @@ internal sealed class CriarPalestraUseCase(
 {
     public async Task<Result<CriarPalestraResponse>> HandleAsync(CriarPalestraRequest request, CancellationToken cancellationToken)
     {
-        var verificacao = await agenda.VerificarAsync(request.EventoId, request.SalaId, request.PalestraInicio, request.PalestraFim, cancellationToken);
+        var verificacao = await agenda.VerificarAsync(request.EventoId, request.TrilhaId, request.SalaId, request.PalestraInicio, request.PalestraFim, cancellationToken);
         if (verificacao.IsFailure)
         {
             return verificacao.Error;
@@ -42,7 +42,7 @@ internal sealed class CriarPalestraUseCase(
         }
 
         var resultado = Palestra.Criar(
-            request.EventoId, request.SalaId, request.PalestraTitulo, request.PalestraDescricao, request.PalestraInicio, request.PalestraFim,
+            request.EventoId, request.TrilhaId, request.SalaId, request.PalestraTitulo, request.PalestraDescricao, request.PalestraInicio, request.PalestraFim,
             request.Palestrantes.Select(p => new NovoPalestrante(p.PessoaId, p.PalestrantePapel)).ToList());
         if (resultado.IsFailure)
         {

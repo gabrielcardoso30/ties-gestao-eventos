@@ -170,6 +170,65 @@ namespace Module.Eventos.Migrations
                     b.ToTable("Inscricoes", "Eventos");
                 });
 
+            modelBuilder.Entity("Module.Eventos.Domain.Trilha", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AlteradoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AlteradoPor")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CriadoPor")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<bool>("EstaAtivo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid>("EventoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ExcluidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExcluidoPor")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("TrilhaCor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<string>("TrilhaDescricao")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("TrilhaNome")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExcluidoEm");
+
+                    b.HasIndex("EventoId", "TrilhaNome")
+                        .IsUnique()
+                        .HasFilter("\"ExcluidoEm\" IS NULL");
+
+                    b.ToTable("Trilhas", "Eventos");
+                });
+
             modelBuilder.Entity("Shared.Data.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -225,9 +284,22 @@ namespace Module.Eventos.Migrations
                     b.Navigation("Evento");
                 });
 
+            modelBuilder.Entity("Module.Eventos.Domain.Trilha", b =>
+                {
+                    b.HasOne("Module.Eventos.Domain.Evento", "Evento")
+                        .WithMany("Trilhas")
+                        .HasForeignKey("EventoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Evento");
+                });
+
             modelBuilder.Entity("Module.Eventos.Domain.Evento", b =>
                 {
                     b.Navigation("Inscricoes");
+
+                    b.Navigation("Trilhas");
                 });
 #pragma warning restore 612, 618
         }

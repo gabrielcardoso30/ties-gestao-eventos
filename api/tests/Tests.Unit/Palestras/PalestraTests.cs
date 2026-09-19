@@ -12,7 +12,7 @@ public class PalestraTests
     private static Palestra NovaPalestra(params Guid[] pessoaIds)
     {
         var palestrantes = pessoaIds.Select(id => new NovoPalestrante(id, PalestrantePapel.Principal)).ToList();
-        var resultado = Palestra.Criar(Guid.NewGuid(), Guid.NewGuid(), "  Monolito modular  ", null, Inicio, Fim, palestrantes);
+        var resultado = Palestra.Criar(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "  Monolito modular  ", null, Inicio, Fim, palestrantes);
         resultado.IsSuccess.ShouldBeTrue();
         return resultado.Value;
     }
@@ -32,7 +32,7 @@ public class PalestraTests
     [Fact]
     public void Criar_sem_palestrantes_deve_falhar()
     {
-        var resultado = Palestra.Criar(Guid.NewGuid(), null, "Título", null, Inicio, Fim, []);
+        var resultado = Palestra.Criar(Guid.NewGuid(), Guid.NewGuid(), null, "Título", null, Inicio, Fim, []);
 
         resultado.IsFailure.ShouldBeTrue();
         resultado.Error.ShouldBe(PalestrasErros.PalestraPrecisaDePalestrante);
@@ -42,7 +42,7 @@ public class PalestraTests
     public void Criar_com_pessoa_repetida_deve_retornar_PalestranteJaVinculado()
     {
         var pessoa = Guid.NewGuid();
-        var resultado = Palestra.Criar(Guid.NewGuid(), null, "Título", null, Inicio, Fim,
+        var resultado = Palestra.Criar(Guid.NewGuid(), Guid.NewGuid(), null, "Título", null, Inicio, Fim,
             [new NovoPalestrante(pessoa, PalestrantePapel.Principal), new NovoPalestrante(pessoa, PalestrantePapel.Coautor)]);
 
         resultado.IsFailure.ShouldBeTrue();

@@ -26,6 +26,7 @@ internal sealed class ObterPalestraUseCase(
             {
                 p.Id,
                 p.EventoId,
+                p.TrilhaId,
                 p.SalaId,
                 p.PalestraTitulo,
                 p.PalestraDescricao,
@@ -47,6 +48,7 @@ internal sealed class ObterPalestraUseCase(
         }
 
         var evento = await eventosApi.ObterEventoResumoAsync(palestra.EventoId, cancellationToken);
+        var trilha = await eventosApi.ObterTrilhaResumoAsync(palestra.EventoId, palestra.TrilhaId, cancellationToken);
         var sala = palestra.SalaId.HasValue ? await locaisApi.ObterSalaResumoAsync(palestra.SalaId.Value, cancellationToken) : null;
         var pessoas = await pessoasApi.ObterPessoasResumoAsync(palestra.Palestrantes.Select(x => x.PessoaId).Distinct().ToList(), cancellationToken);
         var nomes = pessoas.ToDictionary(p => p.Id, p => p.PessoaNome);
@@ -55,6 +57,8 @@ internal sealed class ObterPalestraUseCase(
             palestra.Id,
             palestra.EventoId,
             evento?.EventoNome ?? string.Empty,
+            palestra.TrilhaId,
+            trilha?.TrilhaNome ?? string.Empty,
             palestra.SalaId,
             sala?.SalaNome,
             palestra.PalestraTitulo,

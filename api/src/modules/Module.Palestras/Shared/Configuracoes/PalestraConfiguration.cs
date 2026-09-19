@@ -15,6 +15,7 @@ internal sealed class PalestraConfiguration : IEntityTypeConfiguration<Palestra>
         builder.Ignore(p => p.PalestraCargaHorariaMinutos);
 
         builder.HasIndex(p => p.EventoId);
+        builder.HasIndex(p => p.TrilhaId);
         builder.HasIndex(p => new { p.SalaId, p.PalestraInicio });
 
         builder.HasMany(p => p.Palestrantes).WithOne().HasForeignKey(x => x.PalestraId).OnDelete(DeleteBehavior.Cascade);

@@ -48,3 +48,20 @@ Funcionalidade: Gestão do ciclo de vida de eventos
     Dado que estou autenticado como "Participante"
     Quando crio um evento remoto válido
     Então a resposta deve ter status 403
+
+  Cenário: Organizador cria evento com duas trilhas temáticas
+    Quando crio um evento remoto com as trilhas "Arquitetura" e "Cloud"
+    Então a resposta deve ter status 201
+    E o evento deve apresentar 2 trilhas
+
+  Cenário: Organizador adiciona uma nova trilha ao evento
+    Dado que existe um evento remoto em rascunho
+    Quando adiciono a trilha "Frontend" ao evento
+    Então a resposta deve ter status 201
+    E a trilha criada deve se chamar "Frontend"
+
+  Cenário: Evento não pode ficar sem trilhas
+    Dado que existe um evento remoto em rascunho
+    Quando tento excluir a única trilha do evento
+    Então a resposta deve ter status 422
+    E a resposta deve ser um problema com código "Eventos.EventoPrecisaDeUmaTrilha"

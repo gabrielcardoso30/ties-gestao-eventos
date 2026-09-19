@@ -21,4 +21,10 @@ internal sealed class EventosModuleApi(EventosDbContext db) : IEventosModuleApi
             .TagWith("Eventos.ModuleApi.InscricaoConfirmadaExiste")
             .AsNoTracking()
             .AnyAsync(i => i.EventoId == eventoId && i.PessoaId == pessoaId && i.InscricaoSituacao == InscricaoSituacao.Confirmada, cancellationToken);
+
+    public Task<TrilhaResumo?> ObterTrilhaResumoAsync(Guid eventoId, Guid trilhaId, CancellationToken cancellationToken) =>
+        db.Trilhas.TagWith("Eventos.ModuleApi.ObterTrilhaResumo").AsNoTracking()
+            .Where(t => t.Id == trilhaId && t.EventoId == eventoId)
+            .Select(t => new TrilhaResumo(t.Id, t.EventoId, t.TrilhaNome, t.EstaAtivo))
+            .FirstOrDefaultAsync(cancellationToken);
 }

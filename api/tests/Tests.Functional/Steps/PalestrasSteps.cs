@@ -25,6 +25,8 @@ public sealed class PalestrasSteps(ContextoDoCenario contexto)
         var evento = await contexto.PostAsync("/api/v1/eventos", new { eventoNome = contexto.NomeUnico("Evento Palestra"), eventoDataInicio = Inicio, eventoDataFim = Inicio.AddHours(8), eventoFormato = "Presencial", localId = contexto.Ids["local"] });
         evento.EnsureSuccessStatusCode();
         contexto.Ids["evento"] = (await contexto.CorpoJsonAsync()).GetProperty("id").GetGuid();
+        await contexto.GetAsync($"/api/v1/eventos/{contexto.Ids["evento"]}");
+        contexto.Ids["trilha"] = (await contexto.CorpoJsonAsync()).GetProperty("trilhas")[0].GetProperty("id").GetGuid();
     }
 
     [Given("que existe uma palestra cadastrada")]
@@ -67,7 +69,7 @@ public sealed class PalestrasSteps(ContextoDoCenario contexto)
 
     private object Payload(object palestrantes) => new
     {
-        eventoId = contexto.Ids["evento"], salaId = contexto.Ids["sala"], palestraTitulo = contexto.NomeUnico("Monolito Modular"),
+        eventoId = contexto.Ids["evento"], trilhaId = contexto.Ids["trilha"], salaId = contexto.Ids["sala"], palestraTitulo = contexto.NomeUnico("Monolito Modular"),
         palestraInicio = Inicio.AddHours(1), palestraFim = Inicio.AddHours(2), palestrantes,
     };
 }

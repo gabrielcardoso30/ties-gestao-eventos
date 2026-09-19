@@ -13,6 +13,7 @@ Toda propriedade que qualifica uma entidade começa pelo nome da entidade, segui
 | **Evento** | Acontecimento com nome, período (`EventoDataInicio`/`EventoDataFim`), formato (Presencial, Remoto, Híbrido), situação e, quando presencial ou híbrido, um Local. Agrega Inscrições. | Eventos |
 | **Situação do Evento** | Estado do ciclo de vida: `Rascunho`, `Publicado`, `EmAndamento`, `Encerrado`, `Cancelado`. Transições controladas (ver [business-rules/eventos.md](business-rules/eventos.md)). | Eventos |
 | **Formato do Evento** | `Presencial` (exige Local), `Remoto` (exige link), `Hibrido` (exige ambos). | Eventos |
+| **Trilha** | Linha temática de um Evento que agrupa palestras por assunto. Um evento mantém uma ou mais trilhas e cada palestra pertence a exatamente uma delas. | Eventos |
 | **Inscrição** | Vínculo de uma Pessoa (participante) a um Evento. Situações `Confirmada` ou `Cancelada`. Só uma inscrição confirmada por pessoa e evento. | Eventos |
 | **Participante** | Pessoa com inscrição confirmada em um evento. Não é uma entidade própria: é um papel da Pessoa. | Eventos (papel) / Pessoas (dados) |
 | **Palestra** | Sessão dentro de um Evento com título, período dentro do período do evento, Sala opcional, um ou mais Palestrantes e Conteúdos. | Palestras |

@@ -24,6 +24,14 @@ internal sealed class CriarEventoValidator : AbstractValidator<CriarEventoReques
             .When(r => r.EventoFormato == EventoFormato.Remoto);
         RuleFor(r => r.EventoLinkRemoto).NotEmpty().WithMessage(MensagensValidacaoEventos.LinkObrigatorio)
             .When(r => r.EventoFormato is EventoFormato.Remoto or EventoFormato.Hibrido);
+        RuleFor(r => r.Trilhas).Must(x => x is null || x.Count > 0).WithMessage("Informe ao menos uma trilha.");
+        RuleForEach(r => r.Trilhas).ChildRules(t =>
+        {
+            t.RuleFor(x => x.TrilhaNome).NotEmpty().WithMessage(MensagensValidacao.Obrigatorio).MaximumLength(120).WithMessage(MensagensValidacao.TamanhoMaximo);
+            t.RuleFor(x => x.TrilhaDescricao).MaximumLength(1000).WithMessage(MensagensValidacao.TamanhoMaximo);
+            t.RuleFor(x => x.TrilhaCor).Matches("^#[0-9A-Fa-f]{6}$").When(x => !string.IsNullOrWhiteSpace(x.TrilhaCor)).WithMessage("Informe uma cor hexadecimal no formato #RRGGBB.");
+        });
+        RuleFor(r => r.Trilhas).Must(x => x is null || x.Select(t => t.TrilhaNome.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() == x.Count).WithMessage("Os nomes das trilhas não podem se repetir.");
     }
 }
 

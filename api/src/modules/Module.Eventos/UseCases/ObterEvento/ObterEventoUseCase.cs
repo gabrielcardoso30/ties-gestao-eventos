@@ -19,7 +19,8 @@ internal sealed class ObterEventoUseCase(EventosDbContext db, ILocaisModuleApi l
                 e.Id, e.EventoNome, e.EventoDescricao, e.EventoDataInicio, e.EventoDataFim, e.EventoFormato, e.EventoSituacao,
                 e.LocalId, null, e.EventoLinkRemoto, e.EventoCapacidadeMaxima,
                 e.Inscricoes.Count(i => i.InscricaoSituacao == InscricaoSituacao.Confirmada),
-                e.EventoCancelamentoMotivo, e.CriadoEm, e.AlteradoEm))
+                e.EventoCancelamentoMotivo, e.CriadoEm, e.AlteradoEm,
+                e.Trilhas.OrderBy(t => t.TrilhaNome).Select(t => new ObterEventoTrilhaResponse(t.Id, t.TrilhaNome, t.TrilhaDescricao, t.TrilhaCor, t.EstaAtivo)).ToList()))
             .FirstOrDefaultAsync(cancellationToken);
         if (evento is null)
         {

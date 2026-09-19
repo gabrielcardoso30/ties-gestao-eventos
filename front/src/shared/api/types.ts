@@ -293,7 +293,11 @@ export interface CriarEventoRequest {
   localId?: string | null
   eventoLinkRemoto?: string | null
   eventoCapacidadeMaxima?: number | null
+  trilhas?: CriarEventoTrilhaRequest[]
 }
+
+export interface CriarEventoTrilhaRequest { trilhaNome: string; trilhaDescricao?: string | null; trilhaCor?: string | null }
+export interface ObterEventoTrilhaResponse extends CriarEventoTrilhaRequest { id: string; estaAtivo: boolean }
 
 export interface CriarEventoResponse {
   id: string
@@ -336,6 +340,7 @@ export interface ObterEventoResponse {
   eventoCancelamentoMotivo: string | null
   criadoEm: string
   alteradoEm: string | null
+  trilhas: ObterEventoTrilhaResponse[]
 }
 
 export interface ListarEventosRequest extends PagedRequest {
@@ -396,6 +401,7 @@ export interface PalestranteRequest {
 
 export interface CriarPalestraRequest {
   eventoId: string
+  trilhaId: string
   salaId?: string | null
   palestraTitulo: string
   palestraDescricao?: string | null
@@ -411,6 +417,7 @@ export interface CriarPalestraResponse {
 }
 
 export interface AtualizarPalestraRequest {
+  trilhaId: string
   salaId?: string | null
   palestraTitulo: string
   palestraDescricao?: string | null
@@ -442,6 +449,8 @@ export interface ObterPalestraResponse {
   id: string
   eventoId: string
   eventoNome: string
+  trilhaId: string
+  trilhaNome: string
   salaId: string | null
   salaNome: string | null
   palestraTitulo: string
@@ -465,6 +474,7 @@ export interface ListarPalestrasRequest extends PagedRequest {
 export interface ListarPalestrasItemResponse {
   id: string
   eventoId: string
+  trilhaId: string
   salaId: string | null
   palestraTitulo: string
   palestraInicio: string

@@ -23,6 +23,7 @@ public sealed class Palestra : EntidadeBase
     }
 
     public Guid EventoId { get; private set; }
+    public Guid TrilhaId { get; private set; }
     public Guid? SalaId { get; private set; }
     public string PalestraTitulo { get; private set; } = string.Empty;
     public string? PalestraDescricao { get; private set; }
@@ -40,6 +41,7 @@ public sealed class Palestra : EntidadeBase
     /// <summary>Cria a palestra com ao menos um palestrante; pessoas repetidas resultam em <see cref="PalestrasErros.PalestranteJaVinculado"/>.</summary>
     public static Result<Palestra> Criar(
         Guid eventoId,
+        Guid trilhaId,
         Guid? salaId,
         string palestraTitulo,
         string? palestraDescricao,
@@ -53,7 +55,7 @@ public sealed class Palestra : EntidadeBase
         }
 
         var palestra = new Palestra { EventoId = eventoId };
-        palestra.Atualizar(salaId, palestraTitulo, palestraDescricao, palestraInicio, palestraFim);
+        palestra.Atualizar(trilhaId, salaId, palestraTitulo, palestraDescricao, palestraInicio, palestraFim);
 
         foreach (var palestrante in palestrantes)
         {
@@ -68,8 +70,9 @@ public sealed class Palestra : EntidadeBase
         return palestra;
     }
 
-    public void Atualizar(Guid? salaId, string palestraTitulo, string? palestraDescricao, DateTimeOffset palestraInicio, DateTimeOffset palestraFim)
+    public void Atualizar(Guid trilhaId, Guid? salaId, string palestraTitulo, string? palestraDescricao, DateTimeOffset palestraInicio, DateTimeOffset palestraFim)
     {
+        TrilhaId = trilhaId;
         SalaId = salaId;
         PalestraTitulo = palestraTitulo.Trim();
         PalestraDescricao = palestraDescricao?.Trim();

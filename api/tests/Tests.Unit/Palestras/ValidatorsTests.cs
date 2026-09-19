@@ -13,7 +13,7 @@ public class ValidatorsTests
     private static readonly DateTimeOffset Inicio = new(2026, 10, 1, 9, 0, 0, TimeSpan.Zero);
 
     private static CriarPalestraRequest CriarValido() => new(
-        Guid.NewGuid(), null, "Título", null, Inicio, Inicio.AddHours(1),
+        Guid.NewGuid(), Guid.NewGuid(), null, "Título", null, Inicio, Inicio.AddHours(1),
         [new CriarPalestraPalestranteRequest(Guid.NewGuid(), PalestrantePapel.Principal)]);
 
     [Fact]
@@ -65,7 +65,7 @@ public class ValidatorsTests
     [Fact]
     public void AtualizarPalestra_exige_id_da_rota_e_periodo_valido()
     {
-        var request = new AtualizarPalestraRequest(null, "Título", null, Inicio, Inicio);
+        var request = new AtualizarPalestraRequest(Guid.NewGuid(), null, "Título", null, Inicio, Inicio);
 
         var resultado = new AtualizarPalestraValidator().TestValidate(request);
 

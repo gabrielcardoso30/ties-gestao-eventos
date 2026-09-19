@@ -65,4 +65,33 @@ public sealed class EventosSteps(ContextoDoCenario contexto)
 
     [When("tento publicar o evento")]
     public async Task PublicarEvento() => await contexto.PatchAsync($"/api/v1/eventos/{contexto.Ids["evento"]}/situacao", new { eventoSituacao = "Publicado" });
+
+    [When("crio um evento remoto com as trilhas {string} e {string}")]
+    public async Task CriarComTrilhas(string primeira, string segunda)
+    {
+        var inicio = DateTimeOffset.UtcNow.AddDays(5);
+        var resposta = await contexto.PostAsync("/api/v1/eventos", new { eventoNome = contexto.NomeUnico("Evento com trilhas"), eventoDataInicio = inicio, eventoDataFim = inicio.AddHours(4), eventoFormato = "Remoto", eventoLinkRemoto = "https://evento.test", trilhas = new[] { new { trilhaNome = primeira, trilhaCor = "#112233" }, new { trilhaNome = segunda, trilhaCor = "#445566" } } });
+        if (resposta.StatusCode == HttpStatusCode.Created) contexto.Ids["evento"] = (await contexto.CorpoJsonAsync()).GetProperty("id").GetGuid();
+    }
+
+    [Then("o evento deve apresentar {int} trilhas")]
+    public async Task ValidarQuantidadeTrilhas(int quantidade)
+    {
+        await contexto.GetAsync($"/api/v1/eventos/{contexto.Ids["evento"]}");
+        (await contexto.CorpoJsonAsync()).GetProperty("trilhas").GetArrayLength().ShouldBe(quantidade);
+    }
+
+    [When("adiciono a trilha {string} ao evento")]
+    public async Task AdicionarTrilha(string nome) => await contexto.PostAsync($"/api/v1/eventos/{contexto.Ids["evento"]}/trilhas", new { trilhaNome = nome, trilhaCor = "#123456" });
+
+    [Then("a trilha criada deve se chamar {string}")]
+    public async Task ValidarNomeTrilha(string nome) => (await contexto.CorpoJsonAsync()).GetProperty("trilhaNome").GetString().ShouldBe(nome);
+
+    [When("tento excluir a única trilha do evento")]
+    public async Task ExcluirUnicaTrilha()
+    {
+        await contexto.GetAsync($"/api/v1/eventos/{contexto.Ids["evento"]}");
+        var trilhaId = (await contexto.CorpoJsonAsync()).GetProperty("trilhas")[0].GetProperty("id").GetGuid();
+        await contexto.DeleteAsync($"/api/v1/eventos/{contexto.Ids["evento"]}/trilhas/{trilhaId}");
+    }
 }

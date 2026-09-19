@@ -8,6 +8,7 @@ internal sealed class AtualizarPalestraValidator : AbstractValidator<AtualizarPa
     public AtualizarPalestraValidator()
     {
         RuleFor(r => r.PalestraId).NotEmpty().WithMessage(MensagensValidacao.GuidObrigatorio);
+        RuleFor(r => r.TrilhaId).NotEmpty().WithMessage(MensagensValidacao.GuidObrigatorio);
         RuleFor(r => r.SalaId).NotEqual(Guid.Empty).When(r => r.SalaId.HasValue).WithMessage(MensagensValidacao.GuidObrigatorio);
         RuleFor(r => r.PalestraTitulo).NotEmpty().WithMessage(MensagensValidacao.Obrigatorio).MaximumLength(200).WithMessage(MensagensValidacao.TamanhoMaximo);
         RuleFor(r => r.PalestraDescricao).MaximumLength(4000).WithMessage(MensagensValidacao.TamanhoMaximo);

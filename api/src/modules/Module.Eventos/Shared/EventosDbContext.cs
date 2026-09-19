@@ -13,6 +13,7 @@ public sealed class EventosDbContext(DbContextOptions<EventosDbContext> options)
 
     public DbSet<Evento> Eventos => Set<Evento>();
     public DbSet<Inscricao> Inscricoes => Set<Inscricao>();
+    public DbSet<Trilha> Trilhas => Set<Trilha>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

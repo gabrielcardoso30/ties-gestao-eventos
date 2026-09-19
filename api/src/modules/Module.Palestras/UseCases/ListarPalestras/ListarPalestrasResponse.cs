@@ -3,6 +3,7 @@ namespace Module.Palestras.UseCases.ListarPalestras;
 public sealed record ListarPalestrasItemResponse(
     Guid Id,
     Guid EventoId,
+    Guid TrilhaId,
     Guid? SalaId,
     string PalestraTitulo,
     DateTimeOffset PalestraInicio,

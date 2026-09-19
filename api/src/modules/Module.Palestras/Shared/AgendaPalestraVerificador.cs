@@ -14,7 +14,7 @@ internal sealed class AgendaPalestraVerificador(IEventosModuleApi eventosApi, IL
 {
     private static readonly string[] SituacoesQueNaoAceitamPalestras = ["Encerrado", "Cancelado"];
 
-    public async Task<Result<EventoResumo>> VerificarAsync(Guid eventoId, Guid? salaId, DateTimeOffset palestraInicio, DateTimeOffset palestraFim, CancellationToken cancellationToken)
+    public async Task<Result<EventoResumo>> VerificarAsync(Guid eventoId, Guid trilhaId, Guid? salaId, DateTimeOffset palestraInicio, DateTimeOffset palestraFim, CancellationToken cancellationToken)
     {
         var evento = await eventosApi.ObterEventoResumoAsync(eventoId, cancellationToken);
         if (evento is null)
@@ -25,6 +25,12 @@ internal sealed class AgendaPalestraVerificador(IEventosModuleApi eventosApi, IL
         if (SituacoesQueNaoAceitamPalestras.Contains(evento.EventoSituacao, StringComparer.OrdinalIgnoreCase))
         {
             return PalestrasErros.EventoNaoAceitaPalestras;
+        }
+
+        var trilha = await eventosApi.ObterTrilhaResumoAsync(eventoId, trilhaId, cancellationToken);
+        if (trilha is null || !trilha.EstaAtivo)
+        {
+            return PalestrasErros.TrilhaNaoEncontrada;
         }
 
         if (palestraInicio < evento.EventoDataInicio || palestraFim > evento.EventoDataFim)

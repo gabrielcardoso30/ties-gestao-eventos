@@ -4,7 +4,7 @@ Módulo em implementação; fonte: [`../spec/api-endpoints.md`](../spec/api-endp
 
 ## Agregado
 
-**Evento** (raiz) com coleção de **Inscrições**. Campos: `EventoNome`, `EventoDescricao?` (4000), `EventoDataInicio`, `EventoDataFim`, `EventoFormato` (`Presencial` | `Remoto` | `Hibrido`), `LocalId?`, `EventoLinkRemoto?`, `EventoSituacao` (`Rascunho` | `Publicado` | `EmAndamento` | `Encerrado` | `Cancelado`), `EventoCapacidadeMaxima?`, `EventoCancelamentoMotivo?`.
+**Evento** (raiz) com coleções de **Inscrições** e **Trilhas**. Campos: `EventoNome`, `EventoDescricao?` (4000), `EventoDataInicio`, `EventoDataFim`, `EventoFormato` (`Presencial` | `Remoto` | `Hibrido`), `LocalId?`, `EventoLinkRemoto?`, `EventoSituacao` (`Rascunho` | `Publicado` | `EmAndamento` | `Encerrado` | `Cancelado`), `EventoCapacidadeMaxima?`, `EventoCancelamentoMotivo?`.
 
 **Inscrição**: `EventoId`, `PessoaId`, `InscricaoSituacao` (`Confirmada` | `Cancelada`), `InscricaoRealizadaEm`, `InscricaoCanceladaEm?`. Índice único `(EventoId, PessoaId)` filtrado por `InscricaoSituacao = 'Confirmada'`.
 
@@ -64,6 +64,9 @@ Qualquer transição fora das setas acima → `422 Eventos.TransicaoSituacaoInva
 | RN-EVT-017 | Listagem ordenada por `EventoDataInicio` desc, com filtros de busca, situação, formato e faixa de data de início. | — |
 | RN-EVT-018 | O detalhe do evento inclui `localNome` (via `ILocaisModuleApi`) e `inscricoesConfirmadas` (contagem). | `404 Eventos.EventoNaoEncontrado` |
 | RN-EVT-019 | O nome de uma pessoa na listagem de inscrições vem de `IPessoasModuleApi.ObterPessoasResumoAsync` em lote (nunca copiado para o schema Eventos). | — |
+| RN-EVT-020 | Todo evento mantém ao menos uma trilha. Quando `trilhas` é omitido na criação, nasce a `Trilha única`. | `422 Eventos.EventoPrecisaDeUmaTrilha` |
+| RN-EVT-021 | Nome de trilha é único por evento, sem diferenciar caixa; cor usa `#RRGGBB`. | `409 Eventos.TrilhaNomeDuplicado` / `400 Validacao` |
+| RN-EVT-022 | Trilhas podem ser alteradas, inativadas e excluídas logicamente; inativas não recebem novas palestras. | `404 Eventos.TrilhaNaoEncontrada` |
 
 ## Invariantes do agregado
 
@@ -78,6 +81,7 @@ Qualquer transição fora das setas acima → `422 Eventos.TransicaoSituacaoInva
 |---|---|
 | `ObterEventoResumoAsync(eventoId)` | `EventoResumo(Id, EventoNome, EventoDataInicio, EventoDataFim, EventoFormato, EventoSituacao, LocalId)` (formato/situação como texto) ou `null` |
 | `InscricaoConfirmadaExisteAsync(eventoId, pessoaId)` | `bool` |
+| `ObterTrilhaResumoAsync(eventoId, trilhaId)` | `TrilhaResumo(Id, EventoId, TrilhaNome, EstaAtivo)` ou `null` |
 
 Eventos publicados: `EventoPublicado`, `EventoCancelado`, `InscricaoRealizada`, `InscricaoCancelada`.
 
@@ -94,3 +98,5 @@ Eventos publicados: `EventoPublicado`, `EventoCancelado`, `InscricaoRealizada`, 
 | POST | `/api/v1/eventos/{id}/inscricoes` | autenticado |
 | DELETE | `/api/v1/eventos/{id}/inscricoes/{inscricaoId}` | autenticado |
 | GET | `/api/v1/eventos/{id}/inscricoes` | autenticado |
+| GET/POST | `/api/v1/eventos/{id}/trilhas` | autenticado / Gestao |
+| PUT/DELETE | `/api/v1/eventos/{id}/trilhas/{trilhaId}` | Gestao |
